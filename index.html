@@ -349,7 +349,7 @@
           </div>
           <p class="text-sm text-lavender-700 font-medium mt-1">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20.4</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20.5</span>
           </p>
           <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1.5 max-w-md leading-snug"></p>
         </div>
@@ -404,36 +404,77 @@
           <div id="weather-forecast" class="flex gap-2">
             <!-- Dynamically populated -->
           </div>
+          <button onclick="doBackup()" class="h-10 px-3 rounded-xl bg-white border-2 border-lavender-200 text-lavender-700 text-xs font-bold hover:bg-lavender-50 transition" title="Save a backup copy">
+            <i class="fa-solid fa-download mr-1 text-pink-400"></i> Back Up
+          </button>
         </div>
       </div>
     </header>
-
-    <!-- BACKUP REMINDER CARD (shown once a day until backed up or snoozed) -->
-    <div id="backup-reminder" class="cloud-card p-4 mb-6 hidden">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <div class="text-3xl">💾</div>
-          <div>
-            <h3 class="text-sm font-bold text-lavender-900">Time to back up your dashboard!</h3>
-            <p class="text-xs text-slate-500 font-medium">Save a copy so your stars and homework are never lost.</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="doBackup()" class="bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-sm px-5 py-3 rounded-xl shadow hover:opacity-90 transition">
-            Back Up Now
-          </button>
-          <button onclick="snoozeBackupReminder()" class="bg-white text-slate-500 font-bold text-sm px-5 py-3 rounded-xl border border-lavender-200 hover:bg-lavender-50 transition">
-            Not Today
-          </button>
-        </div>
-      </div>
-    </div>
 
     <!-- DASHBOARD GRID LAYOUT -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
       <!-- LEFT COLUMN (4/12): Time/Mood, Calendar & Activities -->
       <div class="lg:col-span-4 flex flex-col gap-6">
+
+        <!-- CALENDAR -->
+        <div class="cloud-card p-5">
+          <div class="flex items-center justify-between mb-2">
+            <button onclick="navCalendar(-1)" class="w-11 h-11 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Back">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <h3 class="font-bold text-lavender-900 text-base flex items-center gap-2">
+              <i class="fa-regular fa-calendar-days text-lavender-500"></i> <span id="calendar-month-label">...</span>
+            </h3>
+            <button onclick="navCalendar(1)" class="w-11 h-11 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Forward">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="flex bg-lavender-100 rounded-xl p-1 gap-1">
+              <button id="cal-view-month" onclick="setCalView('month')" class="px-3 py-2 rounded-lg text-xs font-bold transition">Month</button>
+              <button id="cal-view-week" onclick="setCalView('week')" class="px-3 py-2 rounded-lg text-xs font-bold transition">Week</button>
+            </div>
+            <div class="flex gap-1.5">
+              <button onclick="openSnapModal()" class="w-10 h-10 rounded-xl bg-white border border-lavender-200 text-pink-400 hover:bg-lavender-50 transition" title="Snap &amp; Add" aria-label="Snap and add">
+                <i class="fa-solid fa-camera"></i>
+              </button>
+              <button onclick="openEventModal()" class="h-10 px-3 rounded-xl bg-gradient-to-r from-lavender-500 to-pink-500 text-white text-xs font-bold shadow hover:opacity-90 transition">
+                <i class="fa-solid fa-plus mr-1"></i> Event
+              </button>
+            </div>
+          </div>
+
+          <!-- Month view -->
+          <div id="calendar-month-view">
+            <div class="grid grid-cols-7 text-center text-xs font-bold text-lavender-400 mb-2">
+              <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+            </div>
+            <div class="grid grid-cols-7 text-center text-xs gap-1 font-semibold text-slate-600" id="calendar-days">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Week view (agenda) -->
+          <div id="calendar-week-view" class="hidden space-y-1.5">
+            <!-- Dynamically populated -->
+          </div>
+
+          <div class="mt-3 pt-3 border-t border-lavender-100 text-xs flex flex-wrap justify-around gap-x-3 gap-y-1 text-slate-500 font-medium" id="calendar-legend">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- SELECTED DAY CARD -->
+        <div class="cloud-card p-5">
+          <h3 class="font-bold text-lavender-900 text-base mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-map-pin text-pink-400"></i> <span id="day-details-title">Today</span>
+          </h3>
+          <div id="day-details-body" class="text-xs text-slate-600 font-medium space-y-1.5">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
 
         <!-- MY ACTIVITIES (editable) -->
         <div class="cloud-card p-5">
@@ -450,40 +491,6 @@
             <button onclick="openActivityModal(null)" class="text-sm font-bold text-lavender-600 hover:text-lavender-800 flex items-center gap-1 bg-lavender-50 px-4 py-3 rounded-xl border border-lavender-200">
               <i class="fa-solid fa-plus text-pink-400"></i> Add Activity
             </button>
-          </div>
-        </div>
-
-        <!-- MONTHLY CALENDAR -->
-        <div class="cloud-card p-5">
-          <div class="flex items-center justify-between mb-3">
-            <button onclick="changeMonth(-1)" class="w-11 h-11 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Previous month">
-              <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <h3 id="calendar-title" class="font-bold text-lavender-900 text-base flex items-center gap-2">
-              <i class="fa-regular fa-calendar-days text-lavender-500"></i> <span id="calendar-month-label">...</span>
-            </h3>
-            <button onclick="changeMonth(1)" class="w-11 h-11 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Next month">
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-          </div>
-
-          <!-- Calendar Grid Header -->
-          <div class="grid grid-cols-7 text-center text-xs font-bold text-lavender-400 mb-2">
-            <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
-          </div>
-          <!-- Days -->
-          <div class="grid grid-cols-7 text-center text-xs gap-1 font-semibold text-slate-600" id="calendar-days">
-            <!-- Dynamically populated -->
-          </div>
-
-          <!-- Tapped-day details -->
-          <div id="day-details" class="mt-3 p-3 bg-lavender-50/80 border border-lavender-100 rounded-2xl hidden">
-            <p id="day-details-title" class="text-xs font-bold text-lavender-800 mb-1"></p>
-            <div id="day-details-body" class="text-xs text-slate-600 font-medium space-y-1"></div>
-          </div>
-
-          <div class="mt-3 pt-3 border-t border-lavender-100 text-xs flex flex-wrap justify-around gap-x-3 gap-y-1 text-slate-500 font-medium" id="calendar-legend">
-            <!-- Dynamically populated -->
           </div>
         </div>
 
@@ -510,31 +517,33 @@
       <!-- CENTER & RIGHT COLUMN (8/12): Responsibilities, School, Homework & Badges -->
       <div class="lg:col-span-8 flex flex-col gap-6">
 
-        <!-- DAILY RESPONSIBILITIES & ROUTINE -->
+        <!-- TODAY'S BRIEF -->
         <div class="cloud-card p-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <div>
               <h2 class="text-xl font-bold text-lavender-900 flex items-center gap-2">
-                <i class="fa-solid fa-heart text-pink-400"></i> Daily Responsibilities &amp; Habits
+                <i class="fa-solid fa-sun text-amber-400"></i> Today's Brief
               </h2>
-              <p class="text-xs text-lavender-600 font-medium">Check off your daily jobs to earn stars! They reset fresh every morning.</p>
+              <p id="brief-date" class="text-xs text-lavender-600 font-medium"></p>
             </div>
-            <!-- Progress Bar -->
-            <div class="bg-lavender-100 rounded-full h-4 w-full sm:w-48 p-0.5 border border-lavender-200 relative overflow-hidden">
-              <div id="routine-progress-bar" class="bg-gradient-to-r from-lavender-400 to-pink-400 h-full rounded-full transition-all duration-500" style="width: 0%;"></div>
-              <span id="routine-progress-text" class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-700">0 of 0 Done</span>
+            <div id="brief-specials" class="flex flex-wrap gap-2">
+              <!-- Holiday / birthday / event chips -->
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="routine-list">
-            <!-- Dynamically populated -->
-          </div>
-
-          <!-- Add custom routine button -->
-          <div class="mt-4 flex justify-end">
-            <button onclick="openModal('routine-modal')" class="text-sm font-bold text-lavender-600 hover:text-lavender-800 flex items-center gap-1 bg-lavender-50 px-4 py-3 rounded-xl border border-lavender-200">
-              <i class="fa-solid fa-plus text-pink-400"></i> Add New Responsibility
-            </button>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="bg-lavender-50/70 border border-lavender-100 rounded-2xl p-3">
+              <p class="text-xs font-bold text-lavender-700 uppercase tracking-wide mb-1.5">💜 Daily Jobs</p>
+              <div id="brief-jobs" class="text-xs text-slate-600 font-medium space-y-1"></div>
+            </div>
+            <div class="bg-pink-50/70 border border-pink-100 rounded-2xl p-3">
+              <p class="text-xs font-bold text-pink-600 uppercase tracking-wide mb-1.5">🎯 Activities</p>
+              <div id="brief-activities" class="text-xs text-slate-600 font-medium space-y-1"></div>
+            </div>
+            <div class="bg-amber-50/70 border border-amber-100 rounded-2xl p-3">
+              <p class="text-xs font-bold text-amber-700 uppercase tracking-wide mb-1.5">📝 Homework &amp; Tests</p>
+              <div id="brief-homework" class="text-xs text-slate-600 font-medium space-y-1"></div>
+            </div>
           </div>
         </div>
 
@@ -567,6 +576,34 @@
           <p id="homework-empty" class="text-sm text-slate-400 font-semibold text-center py-4 hidden">
             🎉 Nothing on the list — you're all caught up!
           </p>
+        </div>
+
+        <!-- DAILY RESPONSIBILITIES & ROUTINE -->
+        <div class="cloud-card p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-xl font-bold text-lavender-900 flex items-center gap-2">
+                <i class="fa-solid fa-heart text-pink-400"></i> Daily Responsibilities &amp; Habits
+              </h2>
+              <p class="text-xs text-lavender-600 font-medium">Check off your daily jobs to earn stars! They reset fresh every morning.</p>
+            </div>
+            <!-- Progress Bar -->
+            <div class="bg-lavender-100 rounded-full h-4 w-full sm:w-48 p-0.5 border border-lavender-200 relative overflow-hidden">
+              <div id="routine-progress-bar" class="bg-gradient-to-r from-lavender-400 to-pink-400 h-full rounded-full transition-all duration-500" style="width: 0%;"></div>
+              <span id="routine-progress-text" class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-700">0 of 0 Done</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="routine-list">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Add custom routine button -->
+          <div class="mt-4 flex justify-end">
+            <button onclick="openModal('routine-modal')" class="text-sm font-bold text-lavender-600 hover:text-lavender-800 flex items-center gap-1 bg-lavender-50 px-4 py-3 rounded-xl border border-lavender-200">
+              <i class="fa-solid fa-plus text-pink-400"></i> Add New Responsibility
+            </button>
+          </div>
         </div>
 
         <!-- 6TH GRADE TEACHERS & CLASSES HUB -->
@@ -849,6 +886,37 @@
     </div>
   </div>
 
+  <!-- ADD EVENT MODAL -->
+  <div id="event-modal" class="modal">
+    <div class="cloud-card p-6 max-w-md w-full">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-lavender-900">📌 Add Calendar Event</h3>
+        <button onclick="closeModal('event-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
+      </div>
+
+      <form id="event-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1" for="event-title">What's happening?</label>
+          <input type="text" id="event-title" required maxlength="60" placeholder="e.g. Field trip to the museum" class="w-full p-3 rounded-xl border border-lavender-200 text-sm focus:outline-none focus:border-lavender-400">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1" for="event-date">What day?</label>
+          <input type="date" id="event-date" required class="w-full p-3 rounded-xl border border-lavender-200 text-sm focus:outline-none focus:border-lavender-400 bg-white">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1" for="event-time">What time? (optional)</label>
+          <input type="text" id="event-time" maxlength="30" placeholder="e.g. 9:00 AM" class="w-full p-3 rounded-xl border border-lavender-200 text-sm focus:outline-none focus:border-lavender-400">
+        </div>
+
+        <button type="submit" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow hover:opacity-90 transition">
+          Add to Calendar
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- SNAP & ADD MODAL -->
   <div id="snap-modal" class="modal">
     <div class="cloud-card p-6 max-w-md w-full">
@@ -887,6 +955,9 @@
           <button onclick="snapUseHomework()" class="bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-sm px-4 py-3 rounded-xl shadow hover:opacity-90 transition text-left">
             📝 Homework or Test <span class="font-medium opacity-80">→ opens the homework form</span>
           </button>
+          <button onclick="snapUseEvent()" class="bg-white text-lavender-700 font-bold text-sm px-4 py-3 rounded-xl border-2 border-lavender-200 hover:bg-lavender-50 transition text-left">
+            📌 Calendar Event <span class="font-medium opacity-70">→ opens the event form</span>
+          </button>
           <div id="snap-activity-buttons" class="grid grid-cols-1 gap-2">
             <!-- One button per activity, dynamically populated -->
           </div>
@@ -913,7 +984,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.08.20.4';
+    var APP_VERSION = 'v2026.08.20.5';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
@@ -935,6 +1006,7 @@
         routineDay: todayStr(),
         routineChecked: [],
         homework: [], // { id, subject, title, due (YYYY-MM-DD), stars, type, done, doneDate }
+        events: [],   // { id, title, date (YYYY-MM-DD), time }
         activities: [
           { id: 'act-bjj',     name: 'Brazilian Jiu-Jitsu (BJJ)', emoji: '🥋', color: '#a855f7', days: [2, 4], time: '4:30 PM - 5:30 PM' },
           { id: 'act-theater', name: 'Theater Club',              emoji: '🎭', color: '#ec4899', days: [],     time: '' },
@@ -978,6 +1050,7 @@
     var saveTimer = null;
 
     function scheduleSave() {
+      refreshDerived(); // every data change refreshes the day card & today's brief
       setSaveBadge('saving');
       if (saveTimer) clearTimeout(saveTimer);
       saveTimer = setTimeout(persistNow, 600);
@@ -1315,56 +1388,112 @@
       scheduleSave();
     }
 
+    // ---------- Holidays (computed for any year) ----------
+    var holidayCache = {};
+
+    function easterDate(y) {
+      var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4,
+          f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30,
+          i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7,
+          m = Math.floor((a + 11 * h + 22 * l) / 451),
+          month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
+      return new Date(y, month - 1, day);
+    }
+
+    function nthWeekdayOfMonth(y, m0, dow, n) {
+      var first = new Date(y, m0, 1).getDay();
+      return new Date(y, m0, 1 + ((dow - first + 7) % 7) + (n - 1) * 7);
+    }
+
+    function lastWeekdayOfMonth(y, m0, dow) {
+      var lastD = new Date(y, m0 + 1, 0);
+      return new Date(y, m0, lastD.getDate() - ((lastD.getDay() - dow + 7) % 7));
+    }
+
+    function holidaysForYear(y) {
+      if (holidayCache[y]) return holidayCache[y];
+      var map = {};
+      function add(d, name, emoji) { map[todayStr(d)] = { name: name, emoji: emoji }; }
+      add(new Date(y, 0, 1), "New Year's Day", '🎉');
+      add(nthWeekdayOfMonth(y, 0, 1, 3), 'MLK Jr. Day', '✊');
+      add(new Date(y, 1, 14), "Valentine's Day", '💘');
+      add(nthWeekdayOfMonth(y, 1, 1, 3), "Presidents' Day", '🇺🇸');
+      add(new Date(y, 2, 17), "St. Patrick's Day", '☘️');
+      var e = easterDate(y);
+      var gf = new Date(e); gf.setDate(e.getDate() - 2);
+      add(gf, 'Good Friday', '✝️');
+      add(e, 'Easter Sunday', '🐣');
+      add(nthWeekdayOfMonth(y, 4, 0, 2), "Mother's Day", '🌸');
+      add(lastWeekdayOfMonth(y, 4, 1), 'Memorial Day', '🇺🇸');
+      add(nthWeekdayOfMonth(y, 5, 0, 3), "Father's Day", '💙');
+      add(new Date(y, 5, 19), 'Juneteenth', '✊🏾');
+      add(new Date(y, 6, 4), 'Independence Day', '🎆');
+      add(nthWeekdayOfMonth(y, 8, 1, 1), 'Labor Day', '🛠️');
+      add(nthWeekdayOfMonth(y, 9, 1, 2), 'Columbus Day', '⛵');
+      add(new Date(y, 9, 31), 'Halloween', '🎃');
+      add(new Date(y, 10, 11), 'Veterans Day', '🎖️');
+      add(nthWeekdayOfMonth(y, 10, 4, 4), 'Thanksgiving', '🦃');
+      add(new Date(y, 11, 24), 'Christmas Eve', '🎄');
+      add(new Date(y, 11, 25), 'Christmas', '🎁');
+      add(new Date(y, 11, 31), "New Year's Eve", '🎇');
+      holidayCache[y] = map;
+      return map;
+    }
+
+    function getHoliday(ds) {
+      return holidaysForYear(Number(ds.slice(0, 4)))[ds] || null;
+    }
+
+    // ---------- Calendar events ----------
+    var EVENT_COLOR = '#8843ce';
+
+    function eventsOn(ds) {
+      return state.events.filter(function (ev) { return ev.date === ds; });
+    }
+
+    function openEventModal(prefill) {
+      document.getElementById('event-title').value = (prefill && prefill.title) || '';
+      document.getElementById('event-date').value = (prefill && prefill.date) || selectedCalDay || todayStr();
+      document.getElementById('event-time').value = (prefill && prefill.time) || '';
+      openModal('event-modal');
+    }
+
+    function deleteEvent(id) {
+      var ev = null;
+      for (var i = 0; i < state.events.length; i++) if (state.events[i].id === id) ev = state.events[i];
+      if (!ev) return;
+      if (!confirm('Remove "' + ev.title + '" from the calendar?')) return;
+      state.events = state.events.filter(function (x) { return x.id !== id; });
+      renderCalendar();
+      scheduleSave();
+    }
+
     // ---------- Calendar ----------
-    var calYear, calMonth; // currently displayed month
+    var calYear, calMonth;            // displayed month (month view)
+    var calWeekAnchor = null;         // any Date inside the displayed week (week view)
+    var calView = 'month';            // 'month' | 'week'
+    var selectedCalDay = null;        // 'YYYY-MM-DD' of the selected day
 
-    var selectedCalDay = null; // 'YYYY-MM-DD' of the tapped day
+    function setCalView(v) {
+      calView = v;
+      renderCalendar();
+    }
 
-    function changeMonth(delta) {
-      calMonth += delta;
-      if (calMonth < 0) { calMonth = 11; calYear--; }
-      if (calMonth > 11) { calMonth = 0; calYear++; }
-      selectedCalDay = null;
-      document.getElementById('day-details').classList.add('hidden');
+    function navCalendar(delta) {
+      if (calView === 'month') {
+        calMonth += delta;
+        if (calMonth < 0) { calMonth = 11; calYear--; }
+        if (calMonth > 11) { calMonth = 0; calYear++; }
+      } else {
+        calWeekAnchor.setDate(calWeekAnchor.getDate() + delta * 7);
+      }
       renderCalendar();
     }
 
     function selectCalDay(dateStr) {
-      selectedCalDay = (selectedCalDay === dateStr) ? null : dateStr; // tap again to close
+      selectedCalDay = dateStr;
       renderCalendar();
       renderDayDetails();
-    }
-
-    function renderDayDetails() {
-      var panel = document.getElementById('day-details');
-      if (!selectedCalDay) { panel.classList.add('hidden'); return; }
-      var d = parseDateStr(selectedCalDay);
-      if (!d) { panel.classList.add('hidden'); return; }
-
-      document.getElementById('day-details-title').textContent =
-        d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-
-      var body = document.getElementById('day-details-body');
-      body.innerHTML = '';
-      var items = [];
-      var dw = d.getDay();
-
-      if (d.getMonth() === 11 && d.getDate() === 18) items.push("🎂 Antonella's birthday!!");
-      state.activities.forEach(function (a) {
-        if (a.days.indexOf(dw) !== -1) items.push(a.emoji + ' ' + a.name + ' • ' + (a.time || 'time TBD'));
-      });
-      state.homework.forEach(function (hw) {
-        if (hw.due === selectedCalDay && !hw.done)
-          items.push((hw.type === 'test' ? '🧠 ' : '📝 ') + hw.title + ' (' + hw.subject + ')');
-      });
-
-      if (items.length === 0) items.push('Nothing scheduled — free day! 🌈');
-      items.forEach(function (txt) {
-        var p = document.createElement('p');
-        p.textContent = txt;
-        body.appendChild(p);
-      });
-      panel.classList.remove('hidden');
     }
 
     function activityDaysOfWeek() {
@@ -1380,6 +1509,33 @@
     }
 
     function renderCalendar() {
+      // View toggle styling
+      var mBtn = document.getElementById('cal-view-month');
+      var wBtn = document.getElementById('cal-view-week');
+      var onCls = 'px-3 py-2 rounded-lg text-xs font-bold transition bg-white text-lavender-700 shadow-sm';
+      var offCls = 'px-3 py-2 rounded-lg text-xs font-bold transition text-lavender-500 hover:text-lavender-700';
+      mBtn.className = calView === 'month' ? onCls : offCls;
+      wBtn.className = calView === 'week' ? onCls : offCls;
+      document.getElementById('calendar-month-view').classList.toggle('hidden', calView !== 'month');
+      document.getElementById('calendar-week-view').classList.toggle('hidden', calView !== 'week');
+
+      if (calView === 'month') renderMonthView(); else renderWeekView();
+    }
+
+    function dayBadges(ds, date) {
+      // Everything happening on a date, as small marks: {emojis: [...], dotColors: [...]}
+      var emojis = [], dotColors = [];
+      if (date.getMonth() === 11 && date.getDate() === 18) emojis.push('🎂');
+      var hol = getHoliday(ds);
+      if (hol) emojis.push(hol.emoji);
+      (activityDaysOfWeek()[date.getDay()] || []).forEach(function (c) { dotColors.push(c); });
+      if (eventsOn(ds).length) dotColors.push(EVENT_COLOR);
+      var hwDue = state.homework.some(function (hw) { return hw.due === ds && !hw.done; });
+      if (hwDue) emojis.push('📝');
+      return { emojis: emojis, dotColors: dotColors };
+    }
+
+    function renderMonthView() {
       var container = document.getElementById('calendar-days');
       container.innerHTML = '';
 
@@ -1389,7 +1545,6 @@
       var firstDay = new Date(calYear, calMonth, 1).getDay();
       var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
       var now = new Date();
-      var dotMap = activityDaysOfWeek();
 
       for (var i = 0; i < firstDay; i++) {
         var blank = document.createElement('div');
@@ -1400,13 +1555,13 @@
       for (var day = 1; day <= daysInMonth; day++) {
         var date = new Date(calYear, calMonth, day);
         var isToday = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
-        var isBirthday = calMonth === 11 && day === 18;
         var dateStr = todayStr(date);
         var isSelected = selectedCalDay === dateStr;
+        var badges = dayBadges(dateStr, date);
 
         var cell = document.createElement('button');
         cell.type = 'button';
-        cell.className = 'p-1 min-h-[42px] flex flex-col items-center justify-center rounded-xl transition ' +
+        cell.className = 'p-1 min-h-[44px] flex flex-col items-center justify-start rounded-xl transition ' +
           (isSelected ? 'bg-lavender-100 ring-2 ring-lavender-400' : 'hover:bg-lavender-50');
         (function (ds) {
           cell.addEventListener('click', function () { selectCalDay(ds); });
@@ -1414,31 +1569,250 @@
 
         var num = document.createElement('span');
         num.className = 'w-6 h-6 flex items-center justify-center text-xs' +
-          (isToday ? ' bg-lavender-500 text-white font-bold rounded-full shadow-sm' : '');
+          (isToday ? ' bg-gradient-to-br from-lavender-500 to-pink-500 text-white font-bold rounded-full shadow-sm' : '');
         num.textContent = day;
 
-        var dots = document.createElement('div');
-        dots.className = 'flex mt-0.5 h-1.5';
-
-        if (isBirthday) {
-          var cake = document.createElement('span');
-          cake.className = 'text-[8px] leading-none';
-          cake.textContent = '🎂';
-          dots.appendChild(cake);
-        } else {
-          var colors = dotMap[date.getDay()] || [];
-          colors.forEach(function (c) {
-            var dot = document.createElement('span');
-            dot.className = 'w-1 h-1 rounded-full inline-block mx-0.5';
-            dot.style.backgroundColor = c;
-            dots.appendChild(dot);
-          });
-        }
+        var marks = document.createElement('div');
+        marks.className = 'flex items-center justify-center flex-wrap mt-0.5 min-h-[10px] leading-none';
+        badges.emojis.slice(0, 2).forEach(function (em) {
+          var s = document.createElement('span');
+          s.className = 'text-[8px] leading-none';
+          s.textContent = em;
+          marks.appendChild(s);
+        });
+        badges.dotColors.slice(0, 3).forEach(function (c) {
+          var dot = document.createElement('span');
+          dot.className = 'w-1 h-1 rounded-full inline-block mx-0.5';
+          dot.style.backgroundColor = c;
+          marks.appendChild(dot);
+        });
 
         cell.appendChild(num);
-        cell.appendChild(dots);
+        cell.appendChild(marks);
         container.appendChild(cell);
       }
+    }
+
+    function renderWeekView() {
+      var container = document.getElementById('calendar-week-view');
+      container.innerHTML = '';
+
+      var start = new Date(calWeekAnchor);
+      start.setDate(start.getDate() - start.getDay()); // back to Sunday
+      var end = new Date(start); end.setDate(start.getDate() + 6);
+      var fmt = { month: 'short', day: 'numeric' };
+      document.getElementById('calendar-month-label').textContent =
+        start.toLocaleDateString('en-US', fmt) + ' – ' + end.toLocaleDateString('en-US', fmt);
+
+      var todayDs = todayStr();
+
+      for (var i = 0; i < 7; i++) {
+        var date = new Date(start); date.setDate(start.getDate() + i);
+        var ds = todayStr(date);
+        var isToday = ds === todayDs;
+        var isSelected = selectedCalDay === ds;
+        var badges = dayBadges(ds, date);
+
+        var row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'w-full flex items-center gap-3 p-2.5 rounded-xl border-2 transition text-left ' +
+          (isSelected ? 'border-lavender-400 bg-lavender-50' : 'border-lavender-100 bg-white hover:border-lavender-300');
+        (function (d2) {
+          row.addEventListener('click', function () { selectCalDay(d2); });
+        })(ds);
+
+        var dayCol = document.createElement('div');
+        dayCol.className = 'w-11 text-center shrink-0';
+        var dowP = document.createElement('p');
+        dowP.className = 'text-[9px] font-bold uppercase tracking-wide ' + (isToday ? 'text-pink-500' : 'text-lavender-400');
+        dowP.textContent = DAY_LABELS[date.getDay()];
+        var numP = document.createElement('p');
+        numP.className = 'text-base font-bold leading-tight ' + (isToday ? 'text-pink-500' : 'text-lavender-900');
+        numP.textContent = date.getDate();
+        dayCol.appendChild(dowP);
+        dayCol.appendChild(numP);
+
+        var info = document.createElement('div');
+        info.className = 'flex-1 min-w-0 text-xs text-slate-500 font-medium truncate';
+        var bits = [];
+        var hol = getHoliday(ds);
+        if (date.getMonth() === 11 && date.getDate() === 18) bits.push('🎂 Birthday!');
+        if (hol) bits.push(hol.emoji + ' ' + hol.name);
+        state.activities.forEach(function (a) {
+          if (a.days.indexOf(date.getDay()) !== -1) bits.push(a.emoji + ' ' + shortActivityLabel(a));
+        });
+        eventsOn(ds).forEach(function (ev) { bits.push('📌 ' + ev.title); });
+        var dueCount = state.homework.filter(function (hw) { return hw.due === ds && !hw.done; }).length;
+        if (dueCount) bits.push('📝 ' + dueCount + ' due');
+        info.textContent = bits.length ? bits.join(' · ') : 'Free day 🌈';
+
+        row.appendChild(dayCol);
+        row.appendChild(info);
+        container.appendChild(row);
+      }
+    }
+
+    // ---------- Selected-day card ----------
+    function renderDayDetails() {
+      var ds = selectedCalDay || todayStr();
+      var d = parseDateStr(ds);
+      if (!d) return;
+      var todayDs = todayStr();
+
+      document.getElementById('day-details-title').textContent =
+        (ds === todayDs ? 'Today • ' : '') +
+        d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+      var body = document.getElementById('day-details-body');
+      body.innerHTML = '';
+      var dw = d.getDay();
+      var count = 0;
+
+      function addRow(text, extraNode) {
+        var row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-2';
+        var p = document.createElement('p');
+        p.textContent = text;
+        row.appendChild(p);
+        if (extraNode) row.appendChild(extraNode);
+        body.appendChild(row);
+        count++;
+      }
+
+      function addHeading(text) {
+        var h = document.createElement('p');
+        h.className = 'text-[10px] font-bold text-lavender-500 uppercase tracking-wide pt-1.5';
+        h.textContent = text;
+        body.appendChild(h);
+      }
+
+      if (d.getMonth() === 11 && d.getDate() === 18) addRow("🎂 Antonella's birthday!!");
+      var hol = getHoliday(ds);
+      if (hol) addRow(hol.emoji + ' ' + hol.name);
+
+      state.activities.forEach(function (a) {
+        if (a.days.indexOf(dw) !== -1) addRow(a.emoji + ' ' + a.name + ' • ' + (a.time || 'time TBD'));
+      });
+
+      state.homework.forEach(function (hw) {
+        if (hw.due === ds) {
+          addRow((hw.done ? '✅ ' : (hw.type === 'test' ? '🧠 ' : '📝 ')) + hw.title + ' (' + hw.subject + ')' + (hw.done ? ' — done!' : ' — due'));
+        }
+      });
+
+      eventsOn(ds).forEach(function (ev) {
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'w-8 h-8 rounded-lg text-slate-300 hover:text-red-400 hover:bg-red-50 transition shrink-0';
+        del.innerHTML = '<i class="fa-solid fa-trash-can text-xs"></i>';
+        del.addEventListener('click', function () { deleteEvent(ev.id); });
+        addRow('📌 ' + ev.title + (ev.time ? ' • ' + ev.time : ''), del);
+      });
+
+      if (count === 0) addRow('Nothing scheduled — free day! 🌈');
+
+      // Coming up: the next 7 days after the selected day
+      var upcoming = [];
+      for (var i = 1; i <= 7; i++) {
+        var fd = new Date(d); fd.setDate(d.getDate() + i);
+        var fds = todayStr(fd);
+        var label = fd.toLocaleDateString('en-US', { weekday: 'short' });
+        var fhol = getHoliday(fds);
+        if (fhol) upcoming.push(label + ': ' + fhol.emoji + ' ' + fhol.name);
+        if (fd.getMonth() === 11 && fd.getDate() === 18) upcoming.push(label + ': 🎂 Birthday!!');
+        state.homework.forEach(function (hw) {
+          if (hw.due === fds && !hw.done) upcoming.push(label + ': ' + (hw.type === 'test' ? '🧠 ' : '📝 ') + hw.title);
+        });
+        eventsOn(fds).forEach(function (ev) { upcoming.push(label + ': 📌 ' + ev.title); });
+      }
+      if (upcoming.length) {
+        addHeading('Coming up this week');
+        upcoming.slice(0, 6).forEach(function (txt) {
+          var p = document.createElement('p');
+          p.className = 'text-slate-400';
+          p.textContent = txt;
+          body.appendChild(p);
+        });
+      }
+    }
+
+    // ---------- Today's Brief ----------
+    function renderBrief() {
+      var ds = todayStr();
+      var d = parseDateStr(ds);
+      var dw = d.getDay();
+
+      document.getElementById('brief-date').textContent =
+        d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + " — here's your day!";
+
+      // Special chips: holiday, birthday, events
+      var specials = document.getElementById('brief-specials');
+      specials.innerHTML = '';
+      function chip(text) {
+        var s = document.createElement('span');
+        s.className = 'text-xs font-bold bg-gradient-to-r from-lavender-100 to-pink-100 text-lavender-800 border border-pink-200 px-3 py-1.5 rounded-full';
+        s.textContent = text;
+        specials.appendChild(s);
+      }
+      if (d.getMonth() === 11 && d.getDate() === 18) chip('🎂 HAPPY BIRTHDAY!!');
+      var hol = getHoliday(ds);
+      if (hol) chip(hol.emoji + ' ' + hol.name);
+      eventsOn(ds).forEach(function (ev) { chip('📌 ' + ev.title + (ev.time ? ' • ' + ev.time : '')); });
+
+      function fill(id, lines, emptyMsg) {
+        var box = document.getElementById(id);
+        box.innerHTML = '';
+        if (!lines.length) {
+          var p = document.createElement('p');
+          p.className = 'text-slate-400';
+          p.textContent = emptyMsg;
+          box.appendChild(p);
+          return;
+        }
+        lines.forEach(function (line) {
+          var p = document.createElement('p');
+          if (line.cls) p.className = line.cls;
+          p.textContent = line.text || line;
+          box.appendChild(p);
+        });
+      }
+
+      // Jobs still to do
+      var jobs = [];
+      state.routines.forEach(function (r) {
+        if (state.routineChecked.indexOf(r.id) === -1) jobs.push(r.emoji + ' ' + r.name + ' (⭐ ' + r.stars + ')');
+      });
+      var doneCount = state.routineChecked.length;
+      if (jobs.length === 0 && state.routines.length > 0) {
+        fill('brief-jobs', [], 'All ' + doneCount + ' done — amazing! 🎉');
+      } else {
+        fill('brief-jobs', jobs, 'No daily jobs set up yet.');
+      }
+
+      // Today's activities
+      var acts = [];
+      state.activities.forEach(function (a) {
+        if (a.days.indexOf(dw) !== -1) acts.push(a.emoji + ' ' + a.name + (a.time ? ' • ' + a.time : ''));
+      });
+      fill('brief-activities', acts, 'No activities today — free afternoon! 🌈');
+
+      // Homework: overdue, due today, due tomorrow
+      var tomorrow = new Date(d); tomorrow.setDate(d.getDate() + 1);
+      var tomDs = todayStr(tomorrow);
+      var hwLines = [];
+      state.homework.forEach(function (hw) {
+        if (hw.done) return;
+        var tag = hw.type === 'test' ? '🧠 ' : '📝 ';
+        if (hw.due && hw.due < ds) hwLines.push({ text: '⚠️ ' + hw.title + ' — past due!', cls: 'text-red-500 font-bold' });
+        else if (hw.due === ds) hwLines.push({ text: tag + hw.title + ' — due TODAY', cls: 'font-bold text-slate-700' });
+        else if (hw.due === tomDs) hwLines.push({ text: tag + hw.title + ' — due tomorrow' });
+      });
+      fill('brief-homework', hwLines, 'Nothing due today or tomorrow — hooray! ✨');
+    }
+
+    function refreshDerived() {
+      renderDayDetails();
+      renderBrief();
     }
 
     // ---------- Quote of the day ----------
@@ -1690,6 +2064,15 @@
         chip.appendChild(document.createTextNode(' ' + shortActivityLabel(a)));
         legend.appendChild(chip);
       });
+      // Events chip
+      var evChip = document.createElement('span');
+      evChip.className = 'flex items-center gap-1';
+      var evDot = document.createElement('span');
+      evDot.className = 'w-2 h-2 rounded-full inline-block';
+      evDot.style.backgroundColor = EVENT_COLOR;
+      evChip.appendChild(evDot);
+      evChip.appendChild(document.createTextNode(' Events'));
+      legend.appendChild(evChip);
     }
 
     function openActivityModal(id) {
@@ -1874,7 +2257,6 @@
       var markDone = function () {
         try { localStorage.setItem(BACKUP_DATE_KEY, todayStr()); } catch (e) {}
         renderBackupLabels();
-        hideBackupReminder();
       };
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1953,27 +2335,6 @@
         label.textContent = 'No backup yet';
         badge.classList.add('hidden');
       }
-    }
-
-    function maybeShowBackupReminder() {
-      var last = null, snooze = null;
-      try {
-        last = localStorage.getItem(BACKUP_DATE_KEY);
-        snooze = localStorage.getItem(BACKUP_SNOOZE_KEY);
-      } catch (e) {}
-      var today = todayStr();
-      if (last !== today && snooze !== today) {
-        document.getElementById('backup-reminder').classList.remove('hidden');
-      }
-    }
-
-    function hideBackupReminder() {
-      document.getElementById('backup-reminder').classList.add('hidden');
-    }
-
-    function snoozeBackupReminder() {
-      try { localStorage.setItem(BACKUP_SNOOZE_KEY, todayStr()); } catch (e) {}
-      hideBackupReminder();
     }
 
     // ---------- Modals & toast ----------
@@ -2227,6 +2588,18 @@
       return res;
     }
 
+    function snapUseEvent() {
+      if (!snapParsed) return;
+      snapParsed = parseSnapText(document.getElementById('snap-text').value);
+      closeModal('snap-modal');
+      openEventModal({
+        title: snapParsed.title || '',
+        date: snapParsed.due || '',
+        time: snapParsed.time || ''
+      });
+      showToast('I filled in what I could read — check it, then add! ✨');
+    }
+
     function snapUseHomework() {
       if (!snapParsed) return;
       // Re-parse in case she fixed the text by hand
@@ -2290,6 +2663,8 @@
       // Midnight rollover: reset routines & refresh everything
       if (todayStr(now) !== lastSeenDay) {
         lastSeenDay = todayStr(now);
+        selectedCalDay = todayStr(now);
+        calWeekAnchor = new Date(now);
         dailyReset();
         renderAll();
       }
@@ -2333,6 +2708,25 @@
       closeModal('homework-modal');
       renderHomework();
       scheduleSave();
+    });
+
+    document.getElementById('event-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var title = document.getElementById('event-title').value.trim();
+      var date = document.getElementById('event-date').value;
+      if (!title || !date) return;
+      state.events.push({
+        id: 'ev-' + Date.now(),
+        title: title,
+        date: date,
+        time: document.getElementById('event-time').value.trim()
+      });
+      document.getElementById('event-form').reset();
+      closeModal('event-modal');
+      selectedCalDay = date;
+      renderCalendar();
+      scheduleSave();
+      showToast('Added to the calendar! 📌');
     });
 
     document.getElementById('activity-form').addEventListener('submit', function (e) {
@@ -2379,6 +2773,7 @@
       renderActivities();
       renderCalendarLegend();
       renderBackupLabels();
+      refreshDerived();
     }
 
     window.onload = function () {
@@ -2388,11 +2783,12 @@
       var now = new Date();
       calYear = now.getFullYear();
       calMonth = now.getMonth();
+      calWeekAnchor = new Date(now);
+      selectedCalDay = todayStr();
 
       renderRoutineEmojiOptions();
       renderAvatarOptions();
       renderAll();
-      maybeShowBackupReminder();
 
       // Live weather: fetch now and refresh every 30 minutes
       fetchWeather();
