@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Antonella's Magical Butterfly Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Quicksand for clean, friendly, non-cursive text -->
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Quicksand', 'sans-serif'],
+          },
+          colors: {
+            lavender: {
+              50: '#fbf8ff',
+              100: '#f4edff',
+              200: '#e9daff',
+              300: '#d5bbf7',
+              400: '#ba90ee',
+              500: '#9f62e2',
+              600: '#8843ce',
+              700: '#7131b0',
+              800: '#5e2a90',
+              900: '#4e2376',
+            },
+            cloud: {
+              white: 'rgba(255, 255, 255, 0.92)',
+              border: 'rgba(213, 187, 247, 0.5)',
+            }
+          },
+          boxShadow: {
+            cloud: '0 8px 32px 0 rgba(159, 98, 226, 0.15)',
+            soft: '0 4px 20px rgba(136, 67, 206, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: linear-gradient(135deg, #e9daff 0%, #f4edff 50%, #d5bbf7 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Floating Cloud Effect */
+    .cloud-card {
+      background: rgba(255, 255, 255, 0.90);
+      backdrop-filter: blur(8px);
+      border: 3px solid #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 10px 25px -5px rgba(136, 67, 206, 0.15), 0 8px 10px -6px rgba(136, 67, 206, 0.1);
+      position: relative;
+    }
+
+    /* Hanging Leaves Top Decor */
+    .hanging-leaves-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      pointer-events: none;
+      z-index: 40;
+      overflow: hidden;
+    }
+
+    /* Floating Butterflies */
+    .butterfly {
+      position: absolute;
+      pointer-events: none;
+      animation: float 6s ease-in-out infinite;
+      z-index: 30;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(5deg); }
+    }
+
+    .butterfly-2 {
+      animation: float2 8s ease-in-out infinite;
+    }
+
+    @keyframes float2 {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(15px) rotate(-8deg); }
+    }
+
+    /* Custom Checkbox Styling */
+    .custom-checkbox {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      border-radius: 50%;
+      border: 2px solid #ba90ee;
+      appearance: none;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .custom-checkbox:checked {
+      background-color: #9f62e2;
+      border-color: #9f62e2;
+    }
+
+    .custom-checkbox:checked::after {
+      content: '✓';
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    /* Modals: shown/hidden with the .open class so display rules never fight Tailwind */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.40);
+      backdrop-filter: blur(4px);
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal.open { display: flex; }
+
+    /* Done homework styling */
+    .hw-done h4 { text-decoration: line-through; }
+    .hw-done { opacity: 0.55; }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #4e2376;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(78, 35, 118, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 70;
+      max-width: 92vw;
+      text-align: center;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Save badge */
+    #save-badge-wrap {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      z-index: 60;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f4edff;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #ba90ee;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #9f62e2;
+    }
+  </style>
+</head>
+<body class="pb-24 pt-6 text-slate-700">
+
+  <!-- HANGING LEAVES DECORATION AT TOP -->
+  <div class="hanging-leaves-container flex justify-between px-4 sm:px-12">
+    <svg width="120" height="50" viewBox="0 0 120 50" fill="none">
+      <path d="M0 -10 C 30 10, 50 30, 60 50 C 40 40, 20 30, 0 20 Z" fill="#86efac" opacity="0.8"/>
+      <path d="M20 -10 C 50 15, 80 25, 110 35 C 80 30, 50 20, 20 0 Z" fill="#4ade80" opacity="0.9"/>
+      <path d="M0 -5 Q 40 20 80 10" stroke="#15803d" stroke-width="2" fill="none"/>
+    </svg>
+    <svg width="180" height="60" viewBox="0 0 180 60" fill="none" class="hidden sm:block">
+      <path d="M30 -10 Q 60 40 120 55 C 90 40, 60 30, 30 10 Z" fill="#a7f3d0"/>
+      <path d="M70 -10 Q 110 30 170 40 C 130 30, 90 20, 70 0 Z" fill="#34d399" opacity="0.85"/>
+      <path d="M10 -10 C 50 20, 100 30, 150 15 C 110 10, 60 5, 10 -10 Z" fill="#059669" opacity="0.7"/>
+    </svg>
+    <svg width="130" height="55" viewBox="0 0 130 55" fill="none">
+      <path d="M130 -10 C 100 10, 80 30, 70 50 C 90 40, 110 30, 130 20 Z" fill="#86efac" opacity="0.8"/>
+      <path d="M110 -10 C 80 15, 50 25, 20 35 C 50 30, 80 20, 110 0 Z" fill="#4ade80" opacity="0.9"/>
+      <path d="M130 -5 Q 90 20 50 10" stroke="#15803d" stroke-width="2" fill="none"/>
+    </svg>
+  </div>
+
+  <!-- FLOATING BUTTERFLIES DECOR -->
+  <div class="butterfly top-12 left-8 text-3xl text-purple-400">🦋</div>
+  <div class="butterfly butterfly-2 top-28 right-12 text-4xl text-pink-400">🦋</div>
+  <div class="butterfly top-1/2 left-4 text-2xl text-indigo-400">🦋</div>
+  <div class="butterfly butterfly-2 bottom-20 right-8 text-3xl text-purple-500">🦋</div>
+
+  <!-- MAIN CONTAINER -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+
+    <!-- TOP HEADER BAR -->
+    <header class="cloud-card p-4 sm:p-6 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <!-- Title & Greeting -->
+      <div class="flex items-center gap-4">
+        <button type="button" class="relative cursor-pointer group" onclick="openModal('avatar-modal')" title="Tap to edit Avatar!">
+          <div id="header-avatar-display" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-lavender-200 border-4 border-white shadow-md flex items-center justify-center text-3xl overflow-hidden">
+            👧🏻
+          </div>
+          <span class="absolute -bottom-2 -right-2 bg-lavender-500 text-white rounded-full w-9 h-9 flex items-center justify-center text-sm shadow hover:scale-110 transition">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </span>
+        </button>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-2xl sm:text-3xl font-bold text-lavender-900">Hello, Antonella! ✨</h1>
+            <span class="bg-pink-100 text-pink-600 text-xs font-bold px-3 py-1 rounded-full border border-pink-200">6th Grader</span>
+          </div>
+          <p class="text-sm text-lavender-700 font-medium mt-1">
+            <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Stats, Classroom Link & Birthday Countdown -->
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <!-- Google Classroom Button -->
+        <a href="https://classroom.google.com" target="_blank" class="bg-emerald-500 hover:bg-emerald-600 text-white border border-emerald-600 rounded-2xl px-4 py-2 flex items-center gap-2 shadow-sm transition hover:scale-105">
+          <span class="text-xl">📚</span>
+          <div class="text-left">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-100">School Link</p>
+            <p class="text-xs font-bold">Google Classroom</p>
+          </div>
+        </a>
+
+        <!-- Birthday Countdown Badge -->
+        <div class="bg-gradient-to-r from-pink-100 to-lavender-100 border border-pink-200 rounded-2xl px-4 py-2 flex items-center gap-3 shadow-sm">
+          <div class="text-2xl">🎂</div>
+          <div>
+            <p class="text-xs font-bold text-pink-500 uppercase tracking-wider">12th Birthday</p>
+            <p id="bday-countdown" class="text-sm font-bold text-lavender-800">Dec 18</p>
+          </div>
+        </div>
+
+        <!-- Star Points -->
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-2 flex items-center gap-2 shadow-sm">
+          <div class="text-2xl text-amber-400">⭐</div>
+          <div>
+            <p class="text-xs font-bold text-amber-600 uppercase tracking-wider">Star Points</p>
+            <p id="star-count" class="text-sm font-bold text-amber-800 transition-all">0 Stars</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- BACKUP REMINDER CARD (shown once a day until backed up or snoozed) -->
+    <div id="backup-reminder" class="cloud-card p-4 mb-6 hidden">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="text-3xl">💾</div>
+          <div>
+            <h3 class="text-sm font-bold text-lavender-900">Time to back up your dashboard!</h3>
+            <p class="text-xs text-slate-500 font-medium">Save a copy so your stars and homework are never lost.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="doBackup()" class="bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-sm px-5 py-3 rounded-xl shadow hover:opacity-90 transition">
+            Back Up Now
+          </button>
+          <button onclick="snoozeBackupReminder()" class="bg-white text-slate-500 font-bold text-sm px-5 py-3 rounded-xl border border-lavender-200 hover:bg-lavender-50 transition">
+            Not Today
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD GRID LAYOUT -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN (4/12): Time/Mood, Calendar & Activities -->
+      <div class="lg:col-span-4 flex flex-col gap-6">
+
+        <!-- CLOCK & MOOD CLOUD CARD -->
+        <div class="cloud-card p-6 text-center">
+          <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-lavender-500 text-white text-xs px-3 py-0.5 rounded-full font-bold shadow-sm">
+            <i class="fa-regular fa-clock mr-1"></i> Live Status
+          </div>
+
+          <div class="mt-2">
+            <div id="live-time" class="text-3xl sm:text-4xl font-bold text-lavender-900 tracking-wide">--:--</div>
+            <div id="live-date" class="text-xs sm:text-sm font-semibold text-lavender-600 mt-1">Loading...</div>
+          </div>
+
+          <div class="my-4 border-t border-lavender-100"></div>
+
+          <!-- Mood Box (honest replacement for the fake weather) -->
+          <div class="flex items-center justify-between bg-lavender-50/80 p-3 rounded-2xl border border-lavender-100">
+            <div class="flex items-center gap-3">
+              <div id="mood-icon" class="text-3xl">🌸</div>
+              <div class="text-left">
+                <p id="mood-label" class="text-lg font-bold text-slate-800">Pick your mood!</p>
+                <p class="text-xs text-slate-500 font-medium">How are you feeling today?</p>
+              </div>
+            </div>
+            <button onclick="openModal('mood-modal')" class="text-xs bg-white text-lavender-600 font-bold px-4 py-3 rounded-xl border border-lavender-200 hover:bg-lavender-100 transition">
+              Change 🌤️
+            </button>
+          </div>
+        </div>
+
+        <!-- MONTHLY CALENDAR -->
+        <div class="cloud-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <button onclick="changeMonth(-1)" class="w-11 h-11 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Previous month">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <h3 id="calendar-title" class="font-bold text-lavender-900 text-base flex items-center gap-2">
+              <i class="fa-regular fa-calendar-days text-lavender-500"></i> <span id="calendar-month-label">...</span>
+            </h3>
+            <button onclick="changeMonth(1)" class="w-11 h-11 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Next month">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+
+          <!-- Calendar Grid Header -->
+          <div class="grid grid-cols-7 text-center text-xs font-bold text-lavender-400 mb-2">
+            <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+          </div>
+          <!-- Days -->
+          <div class="grid grid-cols-7 text-center text-xs gap-1 font-semibold text-slate-600" id="calendar-days">
+            <!-- Dynamically populated -->
+          </div>
+
+          <div class="mt-3 pt-3 border-t border-lavender-100 text-xs flex justify-around text-slate-500 font-medium">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-500 inline-block"></span> BJJ</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-pink-500 inline-block"></span> Theater</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> Bass Guitar</span>
+          </div>
+        </div>
+
+        <!-- AFTER SCHOOL & EXTRA-CURRICULAR ACTIVITIES -->
+        <div class="cloud-card p-5">
+          <h3 class="font-bold text-lavender-900 text-base mb-3 flex items-center justify-between">
+            <span><i class="fa-solid fa-star text-amber-400 mr-2"></i>My Activities</span>
+            <span class="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold">Weekly</span>
+          </h3>
+
+          <div class="space-y-3">
+            <!-- BJJ -->
+            <div class="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 rounded-2xl flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-200 text-purple-700 flex items-center justify-center font-bold text-lg shadow-sm">
+                  🥋
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-slate-800">Brazilian Jiu-Jitsu (BJJ)</h4>
+                  <p class="text-xs text-purple-600 font-medium">Tue &amp; Thu • 4:30 PM - 5:30 PM</p>
+                </div>
+              </div>
+              <span class="text-xs font-bold text-purple-500 bg-white px-2 py-1 rounded-lg border border-purple-100">Active</span>
+            </div>
+
+            <!-- Theater -->
+            <div class="p-3 bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-100 rounded-2xl flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-pink-200 text-pink-700 flex items-center justify-center font-bold text-lg shadow-sm">
+                  🎭
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-slate-800">Theater Club</h4>
+                  <p class="text-xs text-pink-600 font-medium" id="theater-time-text">Time &amp; Days TBD</p>
+                </div>
+              </div>
+              <button onclick="openActivityModal('theater')" class="text-xs text-pink-600 font-bold bg-white px-4 py-3 rounded-xl border border-pink-200 hover:bg-pink-50 transition">Set Time</button>
+            </div>
+
+            <!-- Bass Guitar -->
+            <div class="p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-2xl flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-200 text-amber-700 flex items-center justify-center font-bold text-lg shadow-sm">
+                  🎸
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-slate-800">Bass Guitar Lessons</h4>
+                  <p class="text-xs text-amber-600 font-medium" id="bass-time-text">Saturday Mornings (Time TBD)</p>
+                </div>
+              </div>
+              <button onclick="openActivityModal('bass')" class="text-xs text-amber-700 font-bold bg-white px-4 py-3 rounded-xl border border-amber-200 hover:bg-amber-50 transition">Set Time</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BACKUP & RESTORE -->
+        <div class="cloud-card p-5">
+          <h3 class="font-bold text-lavender-900 text-base mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-down text-lavender-500"></i> Keep It Safe
+          </h3>
+          <p class="text-xs text-slate-500 font-medium mb-3">Back up your stars &amp; homework to a file (share it to Google Drive!).</p>
+          <div class="flex gap-2">
+            <button onclick="doBackup()" class="flex-1 bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-sm px-4 py-3 rounded-xl shadow hover:opacity-90 transition">
+              <i class="fa-solid fa-download mr-1"></i> Backup
+            </button>
+            <button onclick="document.getElementById('restore-input').click()" class="flex-1 bg-white text-lavender-700 font-bold text-sm px-4 py-3 rounded-xl border-2 border-lavender-200 hover:bg-lavender-50 transition">
+              <i class="fa-solid fa-upload mr-1"></i> Restore
+            </button>
+            <input type="file" id="restore-input" accept=".txt,.json,text/plain,application/json" class="hidden" onchange="doRestore(event)">
+          </div>
+          <p id="backup-date-label" class="text-[11px] text-slate-400 font-semibold mt-2 text-center">No backup yet</p>
+        </div>
+
+      </div>
+
+      <!-- CENTER & RIGHT COLUMN (8/12): Responsibilities, School, Homework & Badges -->
+      <div class="lg:col-span-8 flex flex-col gap-6">
+
+        <!-- DAILY RESPONSIBILITIES & ROUTINE -->
+        <div class="cloud-card p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-xl font-bold text-lavender-900 flex items-center gap-2">
+                <i class="fa-solid fa-heart text-pink-400"></i> Daily Responsibilities &amp; Habits
+              </h2>
+              <p class="text-xs text-lavender-600 font-medium">Check off your daily jobs to earn stars! They reset fresh every morning.</p>
+            </div>
+            <!-- Progress Bar -->
+            <div class="bg-lavender-100 rounded-full h-4 w-full sm:w-48 p-0.5 border border-lavender-200 relative overflow-hidden">
+              <div id="routine-progress-bar" class="bg-gradient-to-r from-lavender-400 to-pink-400 h-full rounded-full transition-all duration-500" style="width: 0%;"></div>
+              <span id="routine-progress-text" class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-700">0 of 0 Done</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="routine-list">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Add custom routine button -->
+          <div class="mt-4 flex justify-end">
+            <button onclick="openModal('routine-modal')" class="text-sm font-bold text-lavender-600 hover:text-lavender-800 flex items-center gap-1 bg-lavender-50 px-4 py-3 rounded-xl border border-lavender-200">
+              <i class="fa-solid fa-plus text-pink-400"></i> Add New Responsibility
+            </button>
+          </div>
+        </div>
+
+        <!-- 6TH GRADE TEACHERS & CLASSES HUB -->
+        <div class="cloud-card p-6">
+          <h2 class="text-xl font-bold text-lavender-900 mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-school text-lavender-500"></i> Saint Paul's 6th Grade Teachers &amp; Subjects
+          </h2>
+          <p class="text-xs text-lavender-600 font-medium mb-4">Your class directory for this school year!</p>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            <!-- Mrs. Bolard (Homeroom) -->
+            <div class="bg-gradient-to-b from-purple-50 to-white p-3 rounded-2xl border border-purple-100 text-center shadow-sm hover:scale-105 transition">
+              <div class="w-10 h-10 mx-auto rounded-full bg-purple-200 flex items-center justify-center text-lg mb-1">🏡</div>
+              <p class="text-xs font-bold text-slate-800">Mrs. Bolard</p>
+              <p class="text-[10px] font-semibold text-purple-600">Homeroom</p>
+            </div>
+
+            <!-- Ms. T (LA/Lit) -->
+            <div class="bg-gradient-to-b from-pink-50 to-white p-3 rounded-2xl border border-pink-100 text-center shadow-sm hover:scale-105 transition">
+              <div class="w-10 h-10 mx-auto rounded-full bg-pink-200 flex items-center justify-center text-lg mb-1">📚</div>
+              <p class="text-xs font-bold text-slate-800">Ms. T</p>
+              <p class="text-[10px] font-semibold text-pink-600">LA / Literature</p>
+            </div>
+
+            <!-- Mrs. Hagist (Science) -->
+            <div class="bg-gradient-to-b from-emerald-50 to-white p-3 rounded-2xl border border-emerald-100 text-center shadow-sm hover:scale-105 transition">
+              <div class="w-10 h-10 mx-auto rounded-full bg-emerald-200 flex items-center justify-center text-lg mb-1">🧪</div>
+              <p class="text-xs font-bold text-slate-800">Mrs. Hagist</p>
+              <p class="text-[10px] font-semibold text-emerald-600">Science</p>
+            </div>
+
+            <!-- Sra. Cartiera (Spanish) -->
+            <div class="bg-gradient-to-b from-amber-50 to-white p-3 rounded-2xl border border-amber-100 text-center shadow-sm hover:scale-105 transition">
+              <div class="w-10 h-10 mx-auto rounded-full bg-amber-200 flex items-center justify-center text-lg mb-1">💃</div>
+              <p class="text-xs font-bold text-slate-800">Sra. Cartiera</p>
+              <p class="text-[10px] font-semibold text-amber-600">Spanish</p>
+            </div>
+
+            <!-- Mr. Grant (Religion) -->
+            <div class="bg-gradient-to-b from-blue-50 to-white p-3 rounded-2xl border border-blue-100 text-center shadow-sm hover:scale-105 transition">
+              <div class="w-10 h-10 mx-auto rounded-full bg-blue-200 flex items-center justify-center text-lg mb-1">✝️</div>
+              <p class="text-xs font-bold text-slate-800">Mr. Grant</p>
+              <p class="text-[10px] font-semibold text-blue-600">Religion</p>
+            </div>
+
+            <!-- Mrs. Mokhiber (Math) -->
+            <div class="bg-gradient-to-b from-indigo-50 to-white p-3 rounded-2xl border border-indigo-100 text-center shadow-sm hover:scale-105 transition">
+              <div class="w-10 h-10 mx-auto rounded-full bg-indigo-200 flex items-center justify-center text-lg mb-1">📐</div>
+              <p class="text-xs font-bold text-slate-800">Mrs. Mokhiber</p>
+              <p class="text-[10px] font-semibold text-indigo-600">Math</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- HOMEWORK & TEST STUDY TRACKER -->
+        <div class="cloud-card p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-xl font-bold text-lavender-900 flex items-center gap-2">
+                <i class="fa-solid fa-book-open text-purple-500"></i> Homework &amp; Test Study Tracker
+              </h2>
+              <p class="text-xs text-lavender-600 font-medium">Keep up with tests and assignments! Finished ones disappear the next day.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <a href="https://classroom.google.com" target="_blank" class="bg-emerald-100 text-emerald-700 font-bold text-xs px-3 py-3 rounded-xl border border-emerald-200 hover:bg-emerald-200 transition flex items-center gap-1.5">
+                <span>📚</span> Google Classroom
+              </a>
+              <button onclick="openModal('homework-modal')" class="bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-md hover:opacity-90 transition flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Add Homework / Test
+              </button>
+            </div>
+          </div>
+
+          <!-- Homework List -->
+          <div class="space-y-3" id="homework-list">
+            <!-- Dynamically populated -->
+          </div>
+          <p id="homework-empty" class="text-sm text-slate-400 font-semibold text-center py-4 hidden">
+            🎉 Nothing on the list — you're all caught up!
+          </p>
+        </div>
+
+        <!-- BADGES & ACHIEVEMENTS -->
+        <div class="cloud-card p-6">
+          <h2 class="text-xl font-bold text-lavender-900 mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-award text-amber-400"></i> Antonella's Achievement Badges
+          </h2>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-gradient-to-b from-purple-50 to-white p-3 rounded-2xl border border-purple-100 text-center shadow-sm">
+              <div class="text-3xl mb-1">🥋</div>
+              <h4 class="text-xs font-bold text-slate-800">BJJ Champ</h4>
+              <p class="text-[10px] text-purple-600 font-semibold">Tues &amp; Thurs Warrior</p>
+            </div>
+
+            <div class="bg-gradient-to-b from-pink-50 to-white p-3 rounded-2xl border border-pink-100 text-center shadow-sm">
+              <div class="text-3xl mb-1">🐶</div>
+              <h4 class="text-xs font-bold text-slate-800">Best Dog Helper</h4>
+              <p class="text-[10px] text-pink-600 font-semibold">Water Bowl Master</p>
+            </div>
+
+            <div class="bg-gradient-to-b from-amber-50 to-white p-3 rounded-2xl border border-amber-100 text-center shadow-sm">
+              <div class="text-3xl mb-1">🎸</div>
+              <h4 class="text-xs font-bold text-slate-800">Bass Rockstar</h4>
+              <p class="text-[10px] text-amber-600 font-semibold">Saturday Groove</p>
+            </div>
+
+            <div class="bg-gradient-to-b from-emerald-50 to-white p-3 rounded-2xl border border-emerald-100 text-center shadow-sm">
+              <div class="text-3xl mb-1">📚</div>
+              <h4 class="text-xs font-bold text-slate-800">Study Star</h4>
+              <p class="text-[10px] text-emerald-600 font-semibold">6th Grade Ready</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- AVATAR MODAL -->
+  <div id="avatar-modal" class="modal">
+    <div class="cloud-card p-6 max-w-md w-full">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-lavender-900 flex items-center gap-2">
+          ✨ Custom Avatar Editor
+        </h3>
+        <button onclick="closeModal('avatar-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
+      </div>
+
+      <!-- Preview -->
+      <div class="text-center my-4">
+        <div id="modal-avatar-preview" class="w-24 h-24 mx-auto rounded-full bg-lavender-200 border-4 border-white shadow-lg flex items-center justify-center text-5xl">
+          👧🏻
+        </div>
+        <p class="text-xs text-lavender-600 mt-2 font-semibold">Choose your favorite style for Antonella!</p>
+      </div>
+
+      <!-- Options -->
+      <div class="grid grid-cols-4 gap-3 my-4">
+        <button onclick="selectAvatar('👧🏻')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">👧🏻</button>
+        <button onclick="selectAvatar('👧🏼')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">👧🏼</button>
+        <button onclick="selectAvatar('👧🏽')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">👧🏽</button>
+        <button onclick="selectAvatar('👧🏾')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">👧🏾</button>
+        <button onclick="selectAvatar('🦋')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">🦋</button>
+        <button onclick="selectAvatar('👑')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">👑</button>
+        <button onclick="selectAvatar('🦄')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">🦄</button>
+        <button onclick="selectAvatar('🥋')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">🥋</button>
+      </div>
+
+      <button onclick="closeModal('avatar-modal')" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow hover:opacity-90 transition">
+        Save My Avatar!
+      </button>
+    </div>
+  </div>
+
+  <!-- MOOD MODAL -->
+  <div id="mood-modal" class="modal">
+    <div class="cloud-card p-6 max-w-md w-full">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-lavender-900">How do you feel today?</h3>
+        <button onclick="closeModal('mood-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
+      </div>
+      <div class="grid grid-cols-3 gap-3" id="mood-options">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD RESPONSIBILITY MODAL -->
+  <div id="routine-modal" class="modal">
+    <div class="cloud-card p-6 max-w-md w-full">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-lavender-900">Add New Responsibility</h3>
+        <button onclick="closeModal('routine-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
+      </div>
+
+      <form id="routine-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1" for="routine-name">What's the job?</label>
+          <input type="text" id="routine-name" required maxlength="40" placeholder="e.g. Feed the fish" class="w-full p-3 rounded-xl border border-lavender-200 text-sm focus:outline-none focus:border-lavender-400">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Pick an emoji</label>
+          <div class="grid grid-cols-8 gap-2" id="routine-emoji-options">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow hover:opacity-90 transition">
+          Add It! (worth ⭐ 10 stars a day)
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ACTIVITY TIME MODAL -->
+  <div id="activity-modal" class="modal">
+    <div class="cloud-card p-6 max-w-md w-full">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-lavender-900" id="activity-modal-title">Set Schedule</h3>
+        <button onclick="closeModal('activity-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
+      </div>
+
+      <form id="activity-form" class="space-y-4">
+        <div id="activity-days-wrap">
+          <label class="block text-xs font-bold text-slate-700 mb-1">Which day(s)?</label>
+          <div class="grid grid-cols-7 gap-1" id="activity-day-options">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1" for="activity-time">What time?</label>
+          <input type="text" id="activity-time" maxlength="40" placeholder="e.g. 3:30 - 4:30 PM" class="w-full p-3 rounded-xl border border-lavender-200 text-sm focus:outline-none focus:border-lavender-400">
+        </div>
+
+        <button type="submit" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow hover:opacity-90 transition">
+          Save Schedule
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD HOMEWORK MODAL -->
+  <div id="homework-modal" class="modal">
+    <div class="cloud-card p-6 max-w-md w-full">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-lavender-900">Add Homework or Test</h3>
+        <button onclick="closeModal('homework-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
+      </div>
+
+      <form id="homework-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1" for="hw-subject">Subject &amp; Teacher</label>
+          <select id="hw-subject" class="w-full p-3 rounded-xl border border-lavender-200 bg-white text-sm font-semibold text-slate-700 focus:outline-none focus:border-lavender-400">
+            <option>Math (Mrs. Mokhiber)</option>
+            <option>LA / Lit (Ms. T)</option>
+            <option>Science (Mrs. Hagist)</option>
+            <option>Spanish (Sra. Cartiera)</option>
+            <option>Religion (Mr. Grant)</option>
+            <option>Homeroom (Mrs. Bolard)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1" for="hw-type">Type</label>
+          <select id="hw-type" class="w-full p-3 rounded-xl border border-lavender-200 bg-white text-sm font-semibold text-slate-700 focus:outline-none focus:border-lavender-400">
+            <option value="homework">📝 Homework (⭐ 15 stars)</option>
+            <option value="test">🧠 Test / Quiz Study (⭐ 25 stars)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1" for="hw-title">Assignment / Test Title</label>
+          <input type="text" id="hw-title" required maxlength="80" placeholder="e.g. Read Chapter 4 or Science Quiz" class="w-full p-3 rounded-xl border border-lavender-200 text-sm focus:outline-none focus:border-lavender-400">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1" for="hw-due">Due Date / Test Date</label>
+          <input type="date" id="hw-due" required class="w-full p-3 rounded-xl border border-lavender-200 text-sm focus:outline-none focus:border-lavender-400 bg-white">
+        </div>
+
+        <button type="submit" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow hover:opacity-90 transition">
+          Add Assignment
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- SAVE STATUS BADGE -->
+  <div id="save-badge-wrap">
+    <div id="backup-badge" class="bg-white/90 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full border border-lavender-200 shadow-sm hidden"></div>
+    <div id="save-badge" class="bg-white/90 text-lavender-700 text-xs font-bold px-4 py-2 rounded-full border border-lavender-200 shadow-md flex items-center gap-1.5">
+      <i class="fa-solid fa-circle-check text-emerald-500"></i> <span id="save-badge-text">Ready</span>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast"></div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    'use strict';
+
+    var APP_VERSION = 'v2026.08.20';
+    var STATE_KEY = 'antonella_dashboard_v1';
+    var BACKUP_DATE_KEY = 'antonella_last_backup';
+    var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
+
+    var MOODS = [
+      { icon: '😊', label: 'Happy' },
+      { icon: '🤩', label: 'Excited' },
+      { icon: '😌', label: 'Calm' },
+      { icon: '😴', label: 'Sleepy' },
+      { icon: '😢', label: 'Sad' },
+      { icon: '😤', label: 'Frustrated' },
+      { icon: '🤒', label: 'Not feeling well' },
+      { icon: '🥰', label: 'Loved' },
+      { icon: '💪', label: 'Strong' }
+    ];
+
+    var ROUTINE_EMOJIS = ['✨','🐠','🌱','🧺','👟','📖','🧸','🍽️','🎒','🪥','🐶','🎹'];
+
+    // ---------- Default state ----------
+    function defaultState() {
+      return {
+        version: 1,
+        stars: 0,
+        avatar: '👧🏻',
+        mood: null, // { date, icon, label }
+        routines: [
+          { id: 'r-dog',  name: 'Water the Dog', desc: 'Fresh water every day', emoji: '🐶', stars: 10, custom: false },
+          { id: 'r-room', name: 'Clean My Room', desc: 'Tidy desk & floor',     emoji: '🧹', stars: 15, custom: false },
+          { id: 'r-bed',  name: 'Make My Bed',   desc: 'Pillows neat & fluffy', emoji: '🛏️', stars: 10, custom: false }
+        ],
+        routineDay: todayStr(),
+        routineChecked: [],
+        homework: [], // { id, subject, title, due (YYYY-MM-DD), stars, type, done, doneDate }
+        activities: {
+          bjj:     { days: [2, 4], time: '4:30 PM - 5:30 PM' },
+          theater: { days: [],     time: '' },
+          bass:    { days: [6],    time: '' }
+        }
+      };
+    }
+
+    var state = defaultState();
+
+    // ---------- Date helpers ----------
+    function todayStr(d) {
+      d = d || new Date();
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      return d.getFullYear() + '-' + m + '-' + day;
+    }
+
+    function parseDateStr(s) {
+      // Parse YYYY-MM-DD as a LOCAL date (new Date('YYYY-MM-DD') would be UTC and shift a day)
+      if (!s) return null;
+      var parts = s.split('-');
+      if (parts.length !== 3) return null;
+      var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function friendlyDue(dueStr) {
+      var due = parseDateStr(dueStr);
+      if (!due) return dueStr || '';
+      var today = parseDateStr(todayStr());
+      var diffDays = Math.round((due - today) / 86400000);
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Tomorrow';
+      if (diffDays === -1) return 'Yesterday';
+      var opts = { weekday: 'short', month: 'short', day: 'numeric' };
+      return due.toLocaleDateString('en-US', opts);
+    }
+
+    // ---------- Persistence ----------
+    var saveTimer = null;
+
+    function scheduleSave() {
+      setSaveBadge('saving');
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(persistNow, 600);
+    }
+
+    function persistNow() {
+      saveTimer = null;
+      try {
+        localStorage.setItem(STATE_KEY, JSON.stringify(state));
+        setSaveBadge('saved');
+      } catch (err) {
+        setSaveBadge('error');
+      }
+    }
+
+    function setSaveBadge(mode) {
+      var badge = document.getElementById('save-badge');
+      var text = document.getElementById('save-badge-text');
+      var icon = badge.querySelector('i');
+      badge.classList.remove('!bg-red-100', '!text-red-700', '!border-red-300');
+      if (mode === 'saving') {
+        icon.className = 'fa-solid fa-cloud-arrow-up text-lavender-400';
+        text.textContent = 'Saving...';
+      } else if (mode === 'saved') {
+        icon.className = 'fa-solid fa-circle-check text-emerald-500';
+        var t = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        text.textContent = 'Saved ✓ ' + t;
+      } else if (mode === 'error') {
+        icon.className = 'fa-solid fa-triangle-exclamation text-red-600';
+        text.textContent = 'Could not save!';
+        badge.classList.add('!bg-red-100', '!text-red-700', '!border-red-300');
+      }
+    }
+
+    function loadState() {
+      try {
+        var raw = localStorage.getItem(STATE_KEY);
+        if (!raw) return;
+        var loaded = JSON.parse(raw);
+        if (loaded && typeof loaded === 'object' && Array.isArray(loaded.routines)) {
+          // Merge over defaults so new fields added in updates never break old saves
+          var base = defaultState();
+          state = Object.assign(base, loaded);
+          state.activities = Object.assign(base.activities, loaded.activities || {});
+        }
+      } catch (err) {
+        // Corrupt save: keep defaults rather than crash
+      }
+    }
+
+    // ---------- Daily reset ----------
+    function dailyReset() {
+      var today = todayStr();
+      if (state.routineDay !== today) {
+        state.routineDay = today;
+        state.routineChecked = [];
+        // Homework finished before today disappears
+        state.homework = state.homework.filter(function (hw) {
+          return !(hw.done && hw.doneDate && hw.doneDate < today);
+        });
+        scheduleSave();
+      }
+    }
+
+    // ---------- Stars ----------
+    function setStars(n) {
+      state.stars = Math.max(0, n);
+      document.getElementById('star-count').textContent = state.stars + ' Stars';
+    }
+
+    function starPop() {
+      var el = document.getElementById('star-count');
+      el.classList.add('scale-125', 'text-amber-500');
+      setTimeout(function () { el.classList.remove('scale-125', 'text-amber-500'); }, 300);
+    }
+
+    // ---------- Routines ----------
+    function renderRoutines() {
+      var list = document.getElementById('routine-list');
+      list.innerHTML = '';
+      state.routines.forEach(function (r) {
+        var checked = state.routineChecked.indexOf(r.id) !== -1;
+
+        var label = document.createElement('label');
+        label.className = 'p-3 bg-white border-2 border-lavender-100 hover:border-lavender-300 rounded-2xl flex items-center gap-3 cursor-pointer transition shadow-sm group relative';
+
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'custom-checkbox';
+        cb.checked = checked;
+        cb.addEventListener('change', function () { toggleRoutine(r.id, cb.checked); });
+
+        var wrap = document.createElement('div');
+        wrap.className = 'flex items-center gap-2 flex-1';
+
+        var emoji = document.createElement('span');
+        emoji.className = 'text-2xl';
+        emoji.textContent = r.emoji;
+
+        var textWrap = document.createElement('div');
+        var nameP = document.createElement('p');
+        nameP.className = 'text-sm font-bold text-slate-800 group-hover:text-lavender-700';
+        nameP.textContent = r.name;
+        var descP = document.createElement('p');
+        descP.className = 'text-[11px] text-slate-400';
+        descP.textContent = r.desc + ' • ⭐ ' + r.stars;
+        textWrap.appendChild(nameP);
+        textWrap.appendChild(descP);
+
+        wrap.appendChild(emoji);
+        wrap.appendChild(textWrap);
+        label.appendChild(cb);
+        label.appendChild(wrap);
+
+        if (r.custom) {
+          var del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'w-9 h-9 rounded-xl text-slate-300 hover:text-red-400 hover:bg-red-50 transition flex items-center justify-center';
+          del.innerHTML = '<i class="fa-solid fa-trash-can text-sm"></i>';
+          del.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            deleteRoutine(r.id);
+          });
+          label.appendChild(del);
+        }
+
+        list.appendChild(label);
+      });
+      updateRoutineProgress();
+    }
+
+    function toggleRoutine(id, nowChecked) {
+      var r = null;
+      for (var i = 0; i < state.routines.length; i++) {
+        if (state.routines[i].id === id) { r = state.routines[i]; break; }
+      }
+      if (!r) return;
+      var idx = state.routineChecked.indexOf(id);
+      if (nowChecked && idx === -1) {
+        state.routineChecked.push(id);
+        setStars(state.stars + r.stars);
+        starPop();
+      } else if (!nowChecked && idx !== -1) {
+        state.routineChecked.splice(idx, 1);
+        setStars(state.stars - r.stars);
+      }
+      updateRoutineProgress();
+      scheduleSave();
+    }
+
+    function updateRoutineProgress() {
+      var total = state.routines.length;
+      var done = state.routineChecked.length;
+      var pct = total === 0 ? 0 : Math.round((done / total) * 100);
+      document.getElementById('routine-progress-bar').style.width = pct + '%';
+      document.getElementById('routine-progress-text').textContent = done + ' of ' + total + ' Done';
+    }
+
+    var selectedRoutineEmoji = '✨';
+
+    function renderRoutineEmojiOptions() {
+      var wrap = document.getElementById('routine-emoji-options');
+      wrap.innerHTML = '';
+      ROUTINE_EMOJIS.forEach(function (em) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = em;
+        btn.className = 'p-2 min-h-[44px] bg-lavender-50 rounded-xl text-2xl border-2 transition ' +
+          (em === selectedRoutineEmoji ? 'border-lavender-500' : 'border-transparent hover:border-lavender-300');
+        btn.addEventListener('click', function () {
+          selectedRoutineEmoji = em;
+          renderRoutineEmojiOptions();
+        });
+        wrap.appendChild(btn);
+      });
+    }
+
+    function deleteRoutine(id) {
+      var r = null;
+      for (var i = 0; i < state.routines.length; i++) {
+        if (state.routines[i].id === id) { r = state.routines[i]; break; }
+      }
+      if (!r) return;
+      if (!confirm('Remove "' + r.name + '" from your daily jobs?')) return;
+      // If it was checked today, take its stars back so deleting can't farm
+      var idx = state.routineChecked.indexOf(id);
+      if (idx !== -1) {
+        state.routineChecked.splice(idx, 1);
+        setStars(state.stars - r.stars);
+      }
+      state.routines = state.routines.filter(function (x) { return x.id !== id; });
+      renderRoutines();
+      scheduleSave();
+    }
+
+    // ---------- Homework ----------
+    function renderHomework() {
+      var list = document.getElementById('homework-list');
+      var empty = document.getElementById('homework-empty');
+      list.innerHTML = '';
+
+      var items = state.homework.slice().sort(function (a, b) {
+        if (a.done !== b.done) return a.done ? 1 : -1;
+        return (a.due || '9999').localeCompare(b.due || '9999');
+      });
+
+      empty.classList.toggle('hidden', items.length !== 0);
+
+      items.forEach(function (hw) {
+        var row = document.createElement('div');
+        row.className = 'p-3 bg-white border border-lavender-100 rounded-2xl flex items-center justify-between shadow-sm gap-2' + (hw.done ? ' hw-done' : '');
+
+        var left = document.createElement('div');
+        left.className = 'flex items-center gap-3 flex-1 min-w-0';
+
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'custom-checkbox';
+        cb.checked = !!hw.done;
+        cb.addEventListener('change', function () { toggleHomework(hw.id, cb.checked); });
+
+        var info = document.createElement('div');
+        info.className = 'min-w-0';
+
+        var titleRow = document.createElement('div');
+        titleRow.className = 'flex items-center gap-2 flex-wrap';
+
+        var chip = document.createElement('span');
+        chip.className = 'text-xs font-bold px-2 py-0.5 rounded-full ' + subjectChipClass(hw.subject);
+        chip.textContent = hw.subject;
+
+        var title = document.createElement('h4');
+        title.className = 'text-sm font-bold text-slate-800';
+        title.textContent = (hw.type === 'test' ? '🧠 ' : '') + hw.title;
+
+        titleRow.appendChild(chip);
+        titleRow.appendChild(title);
+
+        var dueP = document.createElement('p');
+        var dueTxt = friendlyDue(hw.due);
+        var overdue = !hw.done && hw.due && hw.due < todayStr();
+        dueP.className = 'text-xs mt-0.5 ' + (overdue ? 'text-red-500 font-bold' : 'text-slate-400');
+        dueP.innerHTML = '<i class="fa-regular fa-clock mr-1"></i>';
+        dueP.appendChild(document.createTextNode((hw.type === 'test' ? 'Test: ' : 'Due: ') + dueTxt + (overdue ? ' — past due!' : '')));
+
+        info.appendChild(titleRow);
+        info.appendChild(dueP);
+        left.appendChild(cb);
+        left.appendChild(info);
+
+        var right = document.createElement('div');
+        right.className = 'flex items-center gap-1.5';
+
+        var starChip = document.createElement('span');
+        starChip.className = 'text-xs font-bold text-amber-500 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200 whitespace-nowrap';
+        starChip.textContent = hw.done ? '⭐ Earned!' : '⭐ +' + hw.stars;
+
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'w-10 h-10 rounded-xl text-slate-300 hover:text-red-400 hover:bg-red-50 transition';
+        del.innerHTML = '<i class="fa-solid fa-trash-can text-sm"></i>';
+        del.addEventListener('click', function () { deleteHomework(hw.id); });
+
+        right.appendChild(starChip);
+        right.appendChild(del);
+
+        row.appendChild(left);
+        row.appendChild(right);
+        list.appendChild(row);
+      });
+    }
+
+    function subjectChipClass(subject) {
+      if (subject.indexOf('Math') === 0) return 'bg-indigo-100 text-indigo-700';
+      if (subject.indexOf('LA') === 0) return 'bg-pink-100 text-pink-700';
+      if (subject.indexOf('Science') === 0) return 'bg-emerald-100 text-emerald-700';
+      if (subject.indexOf('Spanish') === 0) return 'bg-amber-100 text-amber-700';
+      if (subject.indexOf('Religion') === 0) return 'bg-blue-100 text-blue-700';
+      return 'bg-purple-100 text-purple-700';
+    }
+
+    function toggleHomework(id, nowChecked) {
+      var hw = null;
+      for (var i = 0; i < state.homework.length; i++) {
+        if (state.homework[i].id === id) { hw = state.homework[i]; break; }
+      }
+      if (!hw) return;
+      if (nowChecked && !hw.done) {
+        hw.done = true;
+        hw.doneDate = todayStr();
+        setStars(state.stars + hw.stars);
+        starPop();
+        showToast('Great job! ⭐ +' + hw.stars + ' stars!');
+      } else if (!nowChecked && hw.done) {
+        hw.done = false;
+        hw.doneDate = null;
+        setStars(state.stars - hw.stars);
+      }
+      renderHomework();
+      scheduleSave();
+    }
+
+    function deleteHomework(id) {
+      var hw = null;
+      for (var i = 0; i < state.homework.length; i++) {
+        if (state.homework[i].id === id) { hw = state.homework[i]; break; }
+      }
+      if (!hw) return;
+      if (!confirm('Delete "' + hw.title + '"?')) return;
+      // Deleting a completed item keeps the earned stars (it was really done);
+      // deleting an unfinished one never granted stars, so nothing changes.
+      state.homework = state.homework.filter(function (x) { return x.id !== id; });
+      renderHomework();
+      scheduleSave();
+    }
+
+    // ---------- Calendar ----------
+    var calYear, calMonth; // currently displayed month
+
+    function changeMonth(delta) {
+      calMonth += delta;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      renderCalendar();
+    }
+
+    function activityDaysOfWeek() {
+      var map = {}; // weekday -> array of color classes
+      ['bjj', 'theater', 'bass'].forEach(function (key) {
+        var act = state.activities[key];
+        if (!act || !Array.isArray(act.days)) return;
+        var color = key === 'bjj' ? 'bg-purple-500' : (key === 'theater' ? 'bg-pink-500' : 'bg-amber-500');
+        act.days.forEach(function (dw) {
+          if (!map[dw]) map[dw] = [];
+          map[dw].push(color);
+        });
+      });
+      return map;
+    }
+
+    function renderCalendar() {
+      var container = document.getElementById('calendar-days');
+      container.innerHTML = '';
+
+      var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      document.getElementById('calendar-month-label').textContent = monthNames[calMonth] + ' ' + calYear;
+
+      var firstDay = new Date(calYear, calMonth, 1).getDay();
+      var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      var now = new Date();
+      var dotMap = activityDaysOfWeek();
+
+      for (var i = 0; i < firstDay; i++) {
+        var blank = document.createElement('div');
+        blank.className = 'p-1 opacity-20';
+        container.appendChild(blank);
+      }
+
+      for (var day = 1; day <= daysInMonth; day++) {
+        var date = new Date(calYear, calMonth, day);
+        var isToday = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
+        var isBirthday = calMonth === 11 && day === 18;
+
+        var cell = document.createElement('div');
+        cell.className = 'p-1 flex flex-col items-center justify-center';
+
+        var num = document.createElement('span');
+        num.className = 'w-6 h-6 flex items-center justify-center text-xs' +
+          (isToday ? ' bg-lavender-500 text-white font-bold rounded-full shadow-sm' : '');
+        num.textContent = day;
+
+        var dots = document.createElement('div');
+        dots.className = 'flex mt-0.5 h-1.5';
+
+        if (isBirthday) {
+          var cake = document.createElement('span');
+          cake.className = 'text-[8px] leading-none';
+          cake.textContent = '🎂';
+          dots.appendChild(cake);
+        } else {
+          var colors = dotMap[date.getDay()] || [];
+          colors.forEach(function (c) {
+            var dot = document.createElement('span');
+            dot.className = 'w-1 h-1 rounded-full inline-block mx-0.5 ' + c;
+            dots.appendChild(dot);
+          });
+        }
+
+        cell.appendChild(num);
+        cell.appendChild(dots);
+        container.appendChild(cell);
+      }
+    }
+
+    // ---------- Birthday countdown ----------
+    function renderBirthday() {
+      var now = parseDateStr(todayStr());
+      var bday = new Date(now.getFullYear(), 11, 18); // Dec 18
+      if (bday < now) bday = new Date(now.getFullYear() + 1, 11, 18);
+      var diff = Math.round((bday - now) / 86400000);
+      var el = document.getElementById('bday-countdown');
+      if (diff === 0) {
+        el.textContent = '🎉 HAPPY BIRTHDAY!!';
+      } else if (diff === 1) {
+        el.textContent = 'Dec 18 • TOMORROW! 🎈';
+      } else {
+        el.textContent = 'Dec 18 • ' + diff + ' days to go!';
+      }
+    }
+
+    // ---------- Mood ----------
+    function renderMood() {
+      var iconEl = document.getElementById('mood-icon');
+      var labelEl = document.getElementById('mood-label');
+      var m = state.mood;
+      if (m && m.date === todayStr()) {
+        iconEl.textContent = m.icon;
+        labelEl.textContent = m.label;
+      } else {
+        iconEl.textContent = '🌸';
+        labelEl.textContent = 'Pick your mood!';
+      }
+    }
+
+    function renderMoodOptions() {
+      var wrap = document.getElementById('mood-options');
+      wrap.innerHTML = '';
+      MOODS.forEach(function (m) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'p-3 min-h-[64px] bg-lavender-50 rounded-2xl border-2 border-transparent hover:border-lavender-400 transition text-center';
+        var em = document.createElement('div');
+        em.className = 'text-3xl';
+        em.textContent = m.icon;
+        var lb = document.createElement('div');
+        lb.className = 'text-[11px] font-bold text-slate-600 mt-1';
+        lb.textContent = m.label;
+        btn.appendChild(em);
+        btn.appendChild(lb);
+        btn.addEventListener('click', function () {
+          state.mood = { date: todayStr(), icon: m.icon, label: m.label };
+          renderMood();
+          closeModal('mood-modal');
+          scheduleSave();
+        });
+        wrap.appendChild(btn);
+      });
+    }
+
+    // ---------- Activities ----------
+    var editingActivity = null;
+    var selectedActivityDays = [];
+    var DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    function renderActivityTexts() {
+      var th = state.activities.theater;
+      var thEl = document.getElementById('theater-time-text');
+      if (th.days.length || th.time) {
+        thEl.textContent = (th.days.length ? th.days.map(function (d) { return DAY_LABELS[d]; }).join(' & ') : 'Days TBD') +
+          (th.time ? ' • ' + th.time : '');
+      } else {
+        thEl.textContent = 'Time & Days TBD';
+      }
+
+      var ba = state.activities.bass;
+      var baEl = document.getElementById('bass-time-text');
+      baEl.textContent = 'Saturdays' + (ba.time ? ' • ' + ba.time : ' (Time TBD)');
+    }
+
+    function openActivityModal(which) {
+      editingActivity = which;
+      var act = state.activities[which];
+      document.getElementById('activity-modal-title').textContent =
+        which === 'theater' ? '🎭 Theater Club Schedule' : '🎸 Bass Guitar Time';
+      // Bass is always Saturday; only theater picks days
+      document.getElementById('activity-days-wrap').style.display = which === 'theater' ? '' : 'none';
+      selectedActivityDays = act.days.slice();
+      document.getElementById('activity-time').value = act.time || '';
+      renderActivityDayOptions();
+      openModal('activity-modal');
+    }
+
+    function renderActivityDayOptions() {
+      var wrap = document.getElementById('activity-day-options');
+      wrap.innerHTML = '';
+      DAY_LABELS.forEach(function (label, dw) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = label;
+        var on = selectedActivityDays.indexOf(dw) !== -1;
+        btn.className = 'min-h-[44px] rounded-xl text-xs font-bold border-2 transition ' +
+          (on ? 'bg-lavender-500 text-white border-lavender-500' : 'bg-white text-slate-500 border-lavender-200 hover:border-lavender-400');
+        btn.addEventListener('click', function () {
+          var idx = selectedActivityDays.indexOf(dw);
+          if (idx === -1) selectedActivityDays.push(dw); else selectedActivityDays.splice(idx, 1);
+          renderActivityDayOptions();
+        });
+        wrap.appendChild(btn);
+      });
+    }
+
+    // ---------- Avatar ----------
+    function selectAvatar(emoji) {
+      state.avatar = emoji;
+      renderAvatar();
+      scheduleSave();
+    }
+
+    function renderAvatar() {
+      document.getElementById('header-avatar-display').textContent = state.avatar;
+      document.getElementById('modal-avatar-preview').textContent = state.avatar;
+    }
+
+    // ---------- Backup / Restore ----------
+    function backupFilename() {
+      return 'antonella-dashboard-backup-' + todayStr() + '.txt';
+    }
+
+    function buildBackupPayload() {
+      var data = {};
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        data[key] = localStorage.getItem(key);
+      }
+      return JSON.stringify({
+        app: 'antonella-dashboard',
+        version: APP_VERSION,
+        exported: new Date().toISOString(),
+        data: data
+      }, null, 2);
+    }
+
+    function doBackup() {
+      persistNow(); // flush any pending save first
+      var payload = buildBackupPayload();
+      var fname = backupFilename();
+      // .txt (not .json) on purpose: Android's share sheet rejects .json files
+      // and silently downloads instead — .txt makes Google Drive show up.
+      var file = new File([payload], fname, { type: 'text/plain' });
+
+      var markDone = function () {
+        try { localStorage.setItem(BACKUP_DATE_KEY, todayStr()); } catch (e) {}
+        renderBackupLabels();
+        hideBackupReminder();
+      };
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'Antonella Dashboard Backup' })
+          .then(function () {
+            markDone();
+            showToast('Backup shared! 💜');
+          })
+          .catch(function (err) {
+            if (err && err.name === 'AbortError') return; // user closed the share sheet
+            downloadBackup(payload, fname);
+            markDone();
+          });
+      } else {
+        downloadBackup(payload, fname);
+        markDone();
+        showToast('Backup downloaded! Find it in My Files → Downloads, then Share → Google Drive.');
+      }
+    }
+
+    function downloadBackup(payload, fname) {
+      var blob = new Blob([payload], { type: 'text/plain' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    }
+
+    function doRestore(evt) {
+      var fileInput = evt.target;
+      var file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var payload = JSON.parse(reader.result);
+          var data = payload && payload.data;
+          if (!data || typeof data !== 'object' || !data[STATE_KEY]) {
+            alert("Hmm, that file doesn't look like a dashboard backup. Pick the file that starts with 'antonella-dashboard-backup'.");
+            fileInput.value = '';
+            return;
+          }
+          var when = payload.exported ? new Date(payload.exported).toLocaleString() : 'an unknown time';
+          if (!confirm('Replace everything on this dashboard with the backup from ' + when + '? This cannot be undone.')) {
+            fileInput.value = '';
+            return;
+          }
+          Object.keys(data).forEach(function (key) {
+            try { localStorage.setItem(key, data[key]); } catch (e) {}
+          });
+          location.reload();
+        } catch (err) {
+          alert("That file couldn't be read as a backup. Make sure you picked the right one!");
+          fileInput.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function renderBackupLabels() {
+      var last = null;
+      try { last = localStorage.getItem(BACKUP_DATE_KEY); } catch (e) {}
+      var label = document.getElementById('backup-date-label');
+      var badge = document.getElementById('backup-badge');
+      if (last) {
+        var d = parseDateStr(last);
+        var txt = d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : last;
+        label.textContent = 'Last backed up: ' + txt;
+        badge.textContent = 'Backed up ' + txt;
+        badge.classList.remove('hidden');
+      } else {
+        label.textContent = 'No backup yet';
+        badge.classList.add('hidden');
+      }
+    }
+
+    function maybeShowBackupReminder() {
+      var last = null, snooze = null;
+      try {
+        last = localStorage.getItem(BACKUP_DATE_KEY);
+        snooze = localStorage.getItem(BACKUP_SNOOZE_KEY);
+      } catch (e) {}
+      var today = todayStr();
+      if (last !== today && snooze !== today) {
+        document.getElementById('backup-reminder').classList.remove('hidden');
+      }
+    }
+
+    function hideBackupReminder() {
+      document.getElementById('backup-reminder').classList.add('hidden');
+    }
+
+    function snoozeBackupReminder() {
+      try { localStorage.setItem(BACKUP_SNOOZE_KEY, todayStr()); } catch (e) {}
+      hideBackupReminder();
+    }
+
+    // ---------- Modals & toast ----------
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    // Tap outside a modal card to close it
+    document.addEventListener('click', function (e) {
+      if (e.target.classList && e.target.classList.contains('modal')) {
+        e.target.classList.remove('open');
+      }
+    });
+
+    var toastTimer = null;
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { t.classList.remove('show'); }, 4000);
+    }
+
+    // ---------- Clock ----------
+    var lastSeenDay = todayStr();
+
+    function updateClock() {
+      var now = new Date();
+      document.getElementById('live-time').textContent =
+        now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      document.getElementById('live-date').textContent =
+        now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+      // Midnight rollover: reset routines & refresh everything
+      if (todayStr(now) !== lastSeenDay) {
+        lastSeenDay = todayStr(now);
+        dailyReset();
+        renderAll();
+      }
+    }
+
+    // ---------- Forms ----------
+    document.getElementById('routine-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = document.getElementById('routine-name').value.trim();
+      if (!name) return;
+      state.routines.push({
+        id: 'r-' + Date.now(),
+        name: name,
+        desc: 'Daily Responsibility',
+        emoji: selectedRoutineEmoji,
+        stars: 10,
+        custom: true
+      });
+      document.getElementById('routine-form').reset();
+      selectedRoutineEmoji = '✨';
+      renderRoutineEmojiOptions();
+      closeModal('routine-modal');
+      renderRoutines();
+      scheduleSave();
+    });
+
+    document.getElementById('homework-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var type = document.getElementById('hw-type').value;
+      state.homework.push({
+        id: 'h-' + Date.now(),
+        subject: document.getElementById('hw-subject').value,
+        title: document.getElementById('hw-title').value.trim(),
+        due: document.getElementById('hw-due').value,
+        type: type,
+        stars: type === 'test' ? 25 : 15,
+        done: false,
+        doneDate: null
+      });
+      document.getElementById('homework-form').reset();
+      closeModal('homework-modal');
+      renderHomework();
+      scheduleSave();
+    });
+
+    document.getElementById('activity-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!editingActivity) return;
+      var act = state.activities[editingActivity];
+      if (editingActivity === 'theater') act.days = selectedActivityDays.slice();
+      act.time = document.getElementById('activity-time').value.trim();
+      closeModal('activity-modal');
+      renderActivityTexts();
+      renderCalendar();
+      scheduleSave();
+    });
+
+    // ---------- Boot ----------
+    function renderAll() {
+      renderAvatar();
+      setStars(state.stars);
+      renderRoutines();
+      renderHomework();
+      renderCalendar();
+      renderBirthday();
+      renderMood();
+      renderActivityTexts();
+      renderBackupLabels();
+    }
+
+    window.onload = function () {
+      loadState();
+      dailyReset();
+
+      var now = new Date();
+      calYear = now.getFullYear();
+      calMonth = now.getMonth();
+
+      renderMoodOptions();
+      renderRoutineEmojiOptions();
+      renderAll();
+      maybeShowBackupReminder();
+
+      updateClock();
+      setInterval(updateClock, 1000);
+      setSaveBadge('saved');
+    };
+  </script>
+</body>
+</html>
