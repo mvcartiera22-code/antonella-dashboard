@@ -331,7 +331,8 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
     <!-- TOP HEADER BAR -->
-    <header class="cloud-card p-4 sm:p-6 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+    <header class="cloud-card p-4 sm:p-6 mb-6">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
       <!-- Title & Greeting -->
       <div class="flex items-center gap-4">
         <button type="button" class="relative cursor-pointer group" onclick="openModal('avatar-modal')" title="Tap to edit Avatar!">
@@ -348,7 +349,7 @@
           </div>
           <p class="text-sm text-lavender-700 font-medium mt-1">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20.3</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20.4</span>
           </p>
           <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1.5 max-w-md leading-snug"></p>
         </div>
@@ -383,6 +384,28 @@
           </div>
         </div>
       </div>
+      </div>
+
+      <!-- LIVE TIME & WEATHER STRIP -->
+      <div class="w-full mt-4 pt-4 border-t border-lavender-100 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <div class="flex items-baseline gap-3 flex-wrap">
+          <div id="live-time" class="text-2xl sm:text-3xl font-bold text-lavender-900 tracking-wide">--:--</div>
+          <div id="live-date" class="text-xs sm:text-sm font-semibold text-lavender-600">Loading...</div>
+        </div>
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2">
+            <span id="weather-now-icon" class="text-3xl">⛅</span>
+            <div>
+              <p id="weather-now-temp" class="text-base font-bold text-slate-800 leading-tight">--°</p>
+              <p id="weather-now-desc" class="text-[11px] text-slate-500 font-medium leading-tight">Checking the sky...</p>
+              <p id="weather-updated" class="text-[9px] text-slate-400 font-semibold leading-tight"></p>
+            </div>
+          </div>
+          <div id="weather-forecast" class="flex gap-2">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
     </header>
 
     <!-- BACKUP REMINDER CARD (shown once a day until backed up or snoozed) -->
@@ -412,34 +435,21 @@
       <!-- LEFT COLUMN (4/12): Time/Mood, Calendar & Activities -->
       <div class="lg:col-span-4 flex flex-col gap-6">
 
-        <!-- CLOCK & MOOD CLOUD CARD -->
-        <div class="cloud-card p-6 text-center">
-          <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-lavender-500 text-white text-xs px-3 py-0.5 rounded-full font-bold shadow-sm">
-            <i class="fa-regular fa-clock mr-1"></i> Live Status
+        <!-- MY ACTIVITIES (editable) -->
+        <div class="cloud-card p-5">
+          <h3 class="font-bold text-lavender-900 text-base mb-3 flex items-center justify-between">
+            <span><i class="fa-solid fa-star text-amber-400 mr-2"></i>My Activities</span>
+            <span class="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold">Weekly</span>
+          </h3>
+
+          <div class="space-y-3" id="activities-list">
+            <!-- Dynamically populated -->
           </div>
 
-          <div class="mt-2">
-            <div id="live-time" class="text-3xl sm:text-4xl font-bold text-lavender-900 tracking-wide">--:--</div>
-            <div id="live-date" class="text-xs sm:text-sm font-semibold text-lavender-600 mt-1">Loading...</div>
-          </div>
-
-          <div class="my-4 border-t border-lavender-100"></div>
-
-          <!-- Weather (live from Open-Meteo, no account needed) -->
-          <div class="bg-lavender-50/80 p-3 rounded-2xl border border-lavender-100 text-left">
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center gap-3">
-                <div id="weather-now-icon" class="text-3xl">⛅</div>
-                <div>
-                  <p id="weather-now-temp" class="text-lg font-bold text-slate-800">--°</p>
-                  <p id="weather-now-desc" class="text-xs text-slate-500 font-medium">Checking the sky...</p>
-                </div>
-              </div>
-              <p id="weather-updated" class="text-[10px] text-slate-400 font-semibold text-right leading-tight"></p>
-            </div>
-            <div class="grid grid-cols-3 gap-2" id="weather-forecast">
-              <!-- Dynamically populated -->
-            </div>
+          <div class="mt-3 flex justify-end">
+            <button onclick="openActivityModal(null)" class="text-sm font-bold text-lavender-600 hover:text-lavender-800 flex items-center gap-1 bg-lavender-50 px-4 py-3 rounded-xl border border-lavender-200">
+              <i class="fa-solid fa-plus text-pink-400"></i> Add Activity
+            </button>
           </div>
         </div>
 
@@ -472,62 +482,8 @@
             <div id="day-details-body" class="text-xs text-slate-600 font-medium space-y-1"></div>
           </div>
 
-          <div class="mt-3 pt-3 border-t border-lavender-100 text-xs flex justify-around text-slate-500 font-medium">
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-500 inline-block"></span> BJJ</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-pink-500 inline-block"></span> Theater</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> Bass Guitar</span>
-          </div>
-        </div>
-
-        <!-- AFTER SCHOOL & EXTRA-CURRICULAR ACTIVITIES -->
-        <div class="cloud-card p-5">
-          <h3 class="font-bold text-lavender-900 text-base mb-3 flex items-center justify-between">
-            <span><i class="fa-solid fa-star text-amber-400 mr-2"></i>My Activities</span>
-            <span class="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold">Weekly</span>
-          </h3>
-
-          <div class="space-y-3">
-            <!-- BJJ -->
-            <div class="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 rounded-2xl flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-purple-200 text-purple-700 flex items-center justify-center font-bold text-lg shadow-sm">
-                  🥋
-                </div>
-                <div>
-                  <h4 class="text-sm font-bold text-slate-800">Brazilian Jiu-Jitsu (BJJ)</h4>
-                  <p class="text-xs text-purple-600 font-medium">Tue &amp; Thu • 4:30 PM - 5:30 PM</p>
-                </div>
-              </div>
-              <span class="text-xs font-bold text-purple-500 bg-white px-2 py-1 rounded-lg border border-purple-100">Active</span>
-            </div>
-
-            <!-- Theater -->
-            <div class="p-3 bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-100 rounded-2xl flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-pink-200 text-pink-700 flex items-center justify-center font-bold text-lg shadow-sm">
-                  🎭
-                </div>
-                <div>
-                  <h4 class="text-sm font-bold text-slate-800">Theater Club</h4>
-                  <p class="text-xs text-pink-600 font-medium" id="theater-time-text">Time &amp; Days TBD</p>
-                </div>
-              </div>
-              <button onclick="openActivityModal('theater')" class="text-xs text-pink-600 font-bold bg-white px-4 py-3 rounded-xl border border-pink-200 hover:bg-pink-50 transition">Set Time</button>
-            </div>
-
-            <!-- Bass Guitar -->
-            <div class="p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-2xl flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-amber-200 text-amber-700 flex items-center justify-center font-bold text-lg shadow-sm">
-                  🎸
-                </div>
-                <div>
-                  <h4 class="text-sm font-bold text-slate-800">Bass Guitar Lessons</h4>
-                  <p class="text-xs text-amber-600 font-medium" id="bass-time-text">Saturday Mornings (Time TBD)</p>
-                </div>
-              </div>
-              <button onclick="openActivityModal('bass')" class="text-xs text-amber-700 font-bold bg-white px-4 py-3 rounded-xl border border-amber-200 hover:bg-amber-50 transition">Set Time</button>
-            </div>
+          <div class="mt-3 pt-3 border-t border-lavender-100 text-xs flex flex-wrap justify-around gap-x-3 gap-y-1 text-slate-500 font-medium" id="calendar-legend">
+            <!-- Dynamically populated -->
           </div>
         </div>
 
@@ -804,15 +760,27 @@
     </div>
   </div>
 
-  <!-- ACTIVITY TIME MODAL -->
+  <!-- ACTIVITY EDITOR MODAL -->
   <div id="activity-modal" class="modal">
     <div class="cloud-card p-6 max-w-md w-full">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xl font-bold text-lavender-900" id="activity-modal-title">Set Schedule</h3>
+        <h3 class="text-xl font-bold text-lavender-900" id="activity-modal-title">Edit Activity</h3>
         <button onclick="closeModal('activity-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
       </div>
 
       <form id="activity-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1" for="activity-name">Activity name</label>
+          <input type="text" id="activity-name" required maxlength="40" placeholder="e.g. Art Club" class="w-full p-3 rounded-xl border border-lavender-200 text-sm focus:outline-none focus:border-lavender-400">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Pick an emoji</label>
+          <div class="grid grid-cols-8 gap-2" id="activity-emoji-options">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
         <div id="activity-days-wrap">
           <label class="block text-xs font-bold text-slate-700 mb-1">Which day(s)?</label>
           <div class="grid grid-cols-7 gap-1" id="activity-day-options">
@@ -826,7 +794,10 @@
         </div>
 
         <button type="submit" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow hover:opacity-90 transition">
-          Save Schedule
+          Save Activity
+        </button>
+        <button type="button" id="activity-delete-btn" onclick="deleteActivityFromModal()" class="w-full text-red-400 hover:text-red-600 hover:bg-red-50 font-bold text-sm py-2.5 rounded-xl border-2 border-red-100 transition">
+          <i class="fa-solid fa-trash-can mr-1"></i> Remove this Activity
         </button>
       </form>
     </div>
@@ -916,12 +887,9 @@
           <button onclick="snapUseHomework()" class="bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-sm px-4 py-3 rounded-xl shadow hover:opacity-90 transition text-left">
             📝 Homework or Test <span class="font-medium opacity-80">→ opens the homework form</span>
           </button>
-          <button onclick="snapUseActivity('theater')" class="bg-white text-pink-600 font-bold text-sm px-4 py-3 rounded-xl border-2 border-pink-200 hover:bg-pink-50 transition text-left">
-            🎭 Theater Club schedule
-          </button>
-          <button onclick="snapUseActivity('bass')" class="bg-white text-amber-700 font-bold text-sm px-4 py-3 rounded-xl border-2 border-amber-200 hover:bg-amber-50 transition text-left">
-            🎸 Bass Guitar time
-          </button>
+          <div id="snap-activity-buttons" class="grid grid-cols-1 gap-2">
+            <!-- One button per activity, dynamically populated -->
+          </div>
           <button onclick="resetSnapModal()" class="text-xs text-slate-400 font-bold py-2 hover:text-slate-600">
             ↺ Try a different photo
           </button>
@@ -945,7 +913,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.08.20.3';
+    var APP_VERSION = 'v2026.08.20.4';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
@@ -967,11 +935,11 @@
         routineDay: todayStr(),
         routineChecked: [],
         homework: [], // { id, subject, title, due (YYYY-MM-DD), stars, type, done, doneDate }
-        activities: {
-          bjj:     { days: [2, 4], time: '4:30 PM - 5:30 PM' },
-          theater: { days: [],     time: '' },
-          bass:    { days: [6],    time: '' }
-        }
+        activities: [
+          { id: 'act-bjj',     name: 'Brazilian Jiu-Jitsu (BJJ)', emoji: '🥋', color: '#a855f7', days: [2, 4], time: '4:30 PM - 5:30 PM' },
+          { id: 'act-theater', name: 'Theater Club',              emoji: '🎭', color: '#ec4899', days: [],     time: '' },
+          { id: 'act-bass',    name: 'Bass Guitar Lessons',       emoji: '🎸', color: '#f59e0b', days: [6],    time: '' }
+        ]
       };
     }
 
@@ -1053,7 +1021,18 @@
           // Merge over defaults so new fields added in updates never break old saves
           var base = defaultState();
           state = Object.assign(base, loaded);
-          state.activities = Object.assign(base.activities, loaded.activities || {});
+          // Migrate the old fixed {bjj, theater, bass} shape to the editable list
+          if (!Array.isArray(state.activities)) {
+            var oldActs = state.activities || {};
+            state.activities = defaultState().activities.map(function (a) {
+              var key = a.id.replace('act-', '');
+              if (oldActs[key]) {
+                if (Array.isArray(oldActs[key].days)) a.days = oldActs[key].days;
+                if (oldActs[key].time) a.time = oldActs[key].time;
+              }
+              return a;
+            });
+          }
           // Migrate old emoji avatars to the new designed set
           if (!state.avatar || String(state.avatar).indexOf('a-') !== 0) {
             var emojiMap = { '🦋': 'a-butterfly', '👑': 'a-crown', '🦄': 'a-star', '🥋': 'a-bolt' };
@@ -1371,12 +1350,9 @@
       var dw = d.getDay();
 
       if (d.getMonth() === 11 && d.getDate() === 18) items.push("🎂 Antonella's birthday!!");
-      if (state.activities.bjj.days.indexOf(dw) !== -1)
-        items.push('🥋 BJJ • ' + (state.activities.bjj.time || 'time TBD'));
-      if (state.activities.theater.days.indexOf(dw) !== -1)
-        items.push('🎭 Theater Club • ' + (state.activities.theater.time || 'time TBD'));
-      if (state.activities.bass.days.indexOf(dw) !== -1)
-        items.push('🎸 Bass Guitar • ' + (state.activities.bass.time || 'time TBD'));
+      state.activities.forEach(function (a) {
+        if (a.days.indexOf(dw) !== -1) items.push(a.emoji + ' ' + a.name + ' • ' + (a.time || 'time TBD'));
+      });
       state.homework.forEach(function (hw) {
         if (hw.due === selectedCalDay && !hw.done)
           items.push((hw.type === 'test' ? '🧠 ' : '📝 ') + hw.title + ' (' + hw.subject + ')');
@@ -1392,14 +1368,12 @@
     }
 
     function activityDaysOfWeek() {
-      var map = {}; // weekday -> array of color classes
-      ['bjj', 'theater', 'bass'].forEach(function (key) {
-        var act = state.activities[key];
-        if (!act || !Array.isArray(act.days)) return;
-        var color = key === 'bjj' ? 'bg-purple-500' : (key === 'theater' ? 'bg-pink-500' : 'bg-amber-500');
+      var map = {}; // weekday -> array of hex colors
+      state.activities.forEach(function (act) {
+        if (!Array.isArray(act.days)) return;
         act.days.forEach(function (dw) {
           if (!map[dw]) map[dw] = [];
-          map[dw].push(color);
+          map[dw].push(act.color);
         });
       });
       return map;
@@ -1455,7 +1429,8 @@
           var colors = dotMap[date.getDay()] || [];
           colors.forEach(function (c) {
             var dot = document.createElement('span');
-            dot.className = 'w-1 h-1 rounded-full inline-block mx-0.5 ' + c;
+            dot.className = 'w-1 h-1 rounded-full inline-block mx-0.5';
+            dot.style.backgroundColor = c;
             dots.appendChild(dot);
           });
         }
@@ -1601,14 +1576,14 @@
         var d = parseDateStr(day.date);
         var info = wmoInfo(day.code);
         var tile = document.createElement('div');
-        tile.className = 'bg-white/80 border border-lavender-100 rounded-xl p-2 text-center';
+        tile.className = 'bg-lavender-50/80 border border-lavender-100 rounded-xl px-2.5 py-1 text-center';
 
         var name = document.createElement('p');
-        name.className = 'text-[10px] font-bold text-lavender-600 uppercase tracking-wide';
+        name.className = 'text-[9px] font-bold text-lavender-600 uppercase tracking-wide';
         name.textContent = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
 
         var ic = document.createElement('div');
-        ic.className = 'text-xl leading-tight my-0.5';
+        ic.className = 'text-base leading-tight';
         ic.textContent = info.icon;
 
         var temps = document.createElement('p');
@@ -1622,37 +1597,130 @@
       });
     }
 
-    // ---------- Activities ----------
-    var editingActivity = null;
-    var selectedActivityDays = [];
+    // ---------- Activities (fully editable) ----------
     var DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var ACTIVITY_EMOJIS = ['🥋','🎭','🎸','⚽','🏀','🎹','🎨','💃','🏊','🎤','📚','✨'];
+    var ACTIVITY_COLORS = ['#a855f7','#ec4899','#f59e0b','#10b981','#0ea5e9','#f43f5e','#6366f1','#14b8a6'];
+    var editingActivityId = null; // null = adding a new one
+    var selectedActivityDays = [];
+    var selectedActivityEmoji = '✨';
 
-    function renderActivityTexts() {
-      var th = state.activities.theater;
-      var thEl = document.getElementById('theater-time-text');
-      if (th.days.length || th.time) {
-        thEl.textContent = (th.days.length ? th.days.map(function (d) { return DAY_LABELS[d]; }).join(' & ') : 'Days TBD') +
-          (th.time ? ' • ' + th.time : '');
-      } else {
-        thEl.textContent = 'Time & Days TBD';
+    function getActivity(id) {
+      for (var i = 0; i < state.activities.length; i++) {
+        if (state.activities[i].id === id) return state.activities[i];
       }
-
-      var ba = state.activities.bass;
-      var baEl = document.getElementById('bass-time-text');
-      baEl.textContent = 'Saturdays' + (ba.time ? ' • ' + ba.time : ' (Time TBD)');
+      return null;
     }
 
-    function openActivityModal(which) {
-      editingActivity = which;
-      var act = state.activities[which];
-      document.getElementById('activity-modal-title').textContent =
-        which === 'theater' ? '🎭 Theater Club Schedule' : '🎸 Bass Guitar Time';
-      // Bass is always Saturday; only theater picks days
-      document.getElementById('activity-days-wrap').style.display = which === 'theater' ? '' : 'none';
-      selectedActivityDays = act.days.slice();
-      document.getElementById('activity-time').value = act.time || '';
+    function shortActivityLabel(a) {
+      var m = a.name.match(/\(([^)]+)\)/);
+      return m ? m[1] : a.name.split(' ')[0];
+    }
+
+    function activityScheduleText(a) {
+      var parts = [];
+      if (a.days.length) parts.push(a.days.slice().sort().map(function (d) { return DAY_LABELS[d]; }).join(' & '));
+      if (a.time) parts.push(a.time);
+      return parts.length ? parts.join(' • ') : 'Tap Edit to set the schedule';
+    }
+
+    function renderActivities() {
+      var list = document.getElementById('activities-list');
+      list.innerHTML = '';
+      state.activities.forEach(function (a) {
+        var row = document.createElement('div');
+        row.className = 'p-3 rounded-2xl flex items-center justify-between border gap-2';
+        row.style.backgroundColor = a.color + '14';
+        row.style.borderColor = a.color + '33';
+
+        var left = document.createElement('div');
+        left.className = 'flex items-center gap-3 min-w-0';
+
+        var tile = document.createElement('div');
+        tile.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-sm shrink-0';
+        tile.style.backgroundColor = a.color + '30';
+        tile.textContent = a.emoji;
+
+        var info = document.createElement('div');
+        info.className = 'min-w-0';
+        var name = document.createElement('h4');
+        name.className = 'text-sm font-bold text-slate-800';
+        name.textContent = a.name;
+        var sched = document.createElement('p');
+        sched.className = 'text-xs font-medium';
+        sched.style.color = a.color;
+        sched.textContent = activityScheduleText(a);
+        info.appendChild(name);
+        info.appendChild(sched);
+
+        left.appendChild(tile);
+        left.appendChild(info);
+
+        var edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'text-xs font-bold bg-white px-4 py-3 rounded-xl border transition shrink-0 hover:opacity-80';
+        edit.style.color = a.color;
+        edit.style.borderColor = a.color + '55';
+        edit.textContent = 'Edit';
+        edit.addEventListener('click', function () { openActivityModal(a.id); });
+
+        row.appendChild(left);
+        row.appendChild(edit);
+        list.appendChild(row);
+      });
+
+      if (state.activities.length === 0) {
+        var empty = document.createElement('p');
+        empty.className = 'text-sm text-slate-400 font-semibold text-center py-3';
+        empty.textContent = 'No activities yet — add one below!';
+        list.appendChild(empty);
+      }
+    }
+
+    function renderCalendarLegend() {
+      var legend = document.getElementById('calendar-legend');
+      legend.innerHTML = '';
+      state.activities.forEach(function (a) {
+        var chip = document.createElement('span');
+        chip.className = 'flex items-center gap-1';
+        var dot = document.createElement('span');
+        dot.className = 'w-2 h-2 rounded-full inline-block';
+        dot.style.backgroundColor = a.color;
+        chip.appendChild(dot);
+        chip.appendChild(document.createTextNode(' ' + shortActivityLabel(a)));
+        legend.appendChild(chip);
+      });
+    }
+
+    function openActivityModal(id) {
+      editingActivityId = id;
+      var act = id ? getActivity(id) : null;
+      document.getElementById('activity-modal-title').textContent = act ? 'Edit ' + shortActivityLabel(act) : 'Add an Activity';
+      document.getElementById('activity-name').value = act ? act.name : '';
+      selectedActivityEmoji = act ? act.emoji : '✨';
+      selectedActivityDays = act ? act.days.slice() : [];
+      document.getElementById('activity-time').value = act ? (act.time || '') : '';
+      document.getElementById('activity-delete-btn').style.display = act ? '' : 'none';
+      renderActivityEmojiOptions();
       renderActivityDayOptions();
       openModal('activity-modal');
+    }
+
+    function renderActivityEmojiOptions() {
+      var wrap = document.getElementById('activity-emoji-options');
+      wrap.innerHTML = '';
+      ACTIVITY_EMOJIS.forEach(function (em) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = em;
+        btn.className = 'p-2 min-h-[44px] bg-lavender-50 rounded-xl text-2xl border-2 transition ' +
+          (em === selectedActivityEmoji ? 'border-lavender-500' : 'border-transparent hover:border-lavender-300');
+        btn.addEventListener('click', function () {
+          selectedActivityEmoji = em;
+          renderActivityEmojiOptions();
+        });
+        wrap.appendChild(btn);
+      });
     }
 
     function renderActivityDayOptions() {
@@ -1672,6 +1740,21 @@
         });
         wrap.appendChild(btn);
       });
+    }
+
+    function deleteActivityFromModal() {
+      if (!editingActivityId) return;
+      var act = getActivity(editingActivityId);
+      if (!act) return;
+      if (!confirm('Remove "' + act.name + '" from your activities?')) return;
+      state.activities = state.activities.filter(function (a) { return a.id !== editingActivityId; });
+      editingActivityId = null;
+      closeModal('activity-modal');
+      renderActivities();
+      renderCalendarLegend();
+      renderCalendar();
+      renderDayDetails();
+      scheduleSave();
     }
 
     // ---------- Avatar (gradient line-art, not baby emoji!) ----------
@@ -2037,6 +2120,7 @@
         }
         document.getElementById('snap-text').value = text;
         snapParsed = parseSnapText(text);
+        renderSnapActivityButtons();
         snapShowStep('snap-step-result');
       }).catch(function () {
         snapShowStep('snap-step-pick');
@@ -2156,12 +2240,27 @@
       showToast('I filled in what I could read — check it, then tap Add! ✨');
     }
 
-    function snapUseActivity(which) {
+    function renderSnapActivityButtons() {
+      var wrap = document.getElementById('snap-activity-buttons');
+      wrap.innerHTML = '';
+      state.activities.forEach(function (a) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'bg-white font-bold text-sm px-4 py-3 rounded-xl border-2 transition text-left hover:opacity-80';
+        btn.style.color = a.color;
+        btn.style.borderColor = a.color + '55';
+        btn.textContent = a.emoji + ' ' + a.name + ' schedule';
+        btn.addEventListener('click', function () { snapUseActivity(a.id); });
+        wrap.appendChild(btn);
+      });
+    }
+
+    function snapUseActivity(id) {
       if (!snapParsed) return;
       snapParsed = parseSnapText(document.getElementById('snap-text').value);
       closeModal('snap-modal');
-      openActivityModal(which);
-      if (which === 'theater' && snapParsed.days.length) {
+      openActivityModal(id);
+      if (snapParsed.days.length) {
         selectedActivityDays = snapParsed.days.slice();
         renderActivityDayOptions();
       }
@@ -2238,13 +2337,32 @@
 
     document.getElementById('activity-form').addEventListener('submit', function (e) {
       e.preventDefault();
-      if (!editingActivity) return;
-      var act = state.activities[editingActivity];
-      if (editingActivity === 'theater') act.days = selectedActivityDays.slice();
-      act.time = document.getElementById('activity-time').value.trim();
+      var name = document.getElementById('activity-name').value.trim();
+      if (!name) return;
+      var time = document.getElementById('activity-time').value.trim();
+      if (editingActivityId) {
+        var act = getActivity(editingActivityId);
+        if (!act) return;
+        act.name = name;
+        act.emoji = selectedActivityEmoji;
+        act.days = selectedActivityDays.slice();
+        act.time = time;
+      } else {
+        state.activities.push({
+          id: 'act-' + Date.now(),
+          name: name,
+          emoji: selectedActivityEmoji,
+          color: ACTIVITY_COLORS[state.activities.length % ACTIVITY_COLORS.length],
+          days: selectedActivityDays.slice(),
+          time: time
+        });
+      }
+      editingActivityId = null;
       closeModal('activity-modal');
-      renderActivityTexts();
+      renderActivities();
+      renderCalendarLegend();
       renderCalendar();
+      renderDayDetails();
       scheduleSave();
     });
 
@@ -2258,7 +2376,8 @@
       renderBirthday();
       renderQuote();
       renderWeather();
-      renderActivityTexts();
+      renderActivities();
+      renderCalendarLegend();
       renderBackupLabels();
     }
 
