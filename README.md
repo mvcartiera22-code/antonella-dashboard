@@ -9,6 +9,8 @@ Saint Paul's School, Kensington, CT.
 
 - ⭐ Star points for daily responsibilities and finished homework
 - 📝 Homework & test tracker (finished items disappear the next day)
+- 📸 Snap & Add — photograph a Classroom assignment or paper schedule
+  and the dashboard reads it and fills in the form
 - 📅 Real calendar with activity dots (BJJ, Theater, Bass Guitar) and the
   Dec 18 birthday
 - 🎂 Live birthday countdown

@@ -177,6 +177,112 @@
       gap: 4px;
     }
 
+    /* ---------- Motion & polish ---------- */
+    button { transition: transform 0.15s ease, opacity 0.15s ease, background-color 0.15s ease; }
+    button:active { transform: scale(0.96); }
+
+    .avatar-svg { width: 100%; height: 100%; display: block; }
+
+    @media (prefers-reduced-motion: no-preference) {
+      /* Cards float up as the page loads (stagger set by JS) */
+      .cloud-card { animation: cardIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+      .modal .cloud-card { animation: none; }
+      .modal.open .cloud-card { animation: popIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+      @keyframes cardIn {
+        from { opacity: 0; transform: translateY(18px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes popIn {
+        from { opacity: 0; transform: scale(0.92) translateY(10px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+      }
+
+      /* Progress bar shimmer */
+      #routine-progress-bar { position: relative; overflow: hidden; }
+      #routine-progress-bar::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%);
+        background-size: 200% 100%;
+        animation: shimmer 2.4s ease-in-out infinite;
+      }
+      @keyframes shimmer {
+        0% { background-position: 180% 0; }
+        100% { background-position: -80% 0; }
+      }
+
+      /* A butterfly occasionally flutters across the screen */
+      .fly-across {
+        position: fixed;
+        left: -70px;
+        z-index: 45;
+        pointer-events: none;
+        animation: flyX 16s linear forwards;
+      }
+      .fly-across > span {
+        display: inline-block;
+        animation: flyY 2.6s ease-in-out infinite alternate;
+      }
+      @keyframes flyX { from { left: -70px; } to { left: 105vw; } }
+      @keyframes flyY {
+        from { transform: translateY(-14px) rotate(8deg); }
+        to   { transform: translateY(14px) rotate(-8deg); }
+      }
+
+      /* Floating "+10" star reward */
+      .star-float {
+        position: fixed;
+        z-index: 65;
+        font-weight: 700;
+        color: #d97706;
+        text-shadow: 0 1px 0 #fff;
+        pointer-events: none;
+        animation: starRise 1.1s ease-out forwards;
+      }
+      @keyframes starRise {
+        0% { opacity: 0; transform: translateY(6px) scale(0.8); }
+        20% { opacity: 1; transform: translateY(0) scale(1.15); }
+        100% { opacity: 0; transform: translateY(-44px) scale(1); }
+      }
+
+      /* Celebration confetti */
+      .confetti {
+        position: fixed;
+        top: -40px;
+        z-index: 65;
+        pointer-events: none;
+        animation: confettiFall linear forwards;
+      }
+      @keyframes confettiFall {
+        to { transform: translateY(110vh) rotate(540deg); opacity: 0.7; }
+      }
+    }
+
+    /* Touch carousel (teachers & badges on smaller screens) */
+    .carousel {
+      display: flex;
+      gap: 0.75rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 0.5rem;
+      scrollbar-width: none;
+    }
+    .carousel::-webkit-scrollbar { display: none; }
+    .carousel > * {
+      scroll-snap-align: start;
+      flex: 0 0 auto;
+      width: 9.5rem;
+    }
+    @media (min-width: 768px) {
+      .carousel { display: grid; overflow-x: visible; padding-bottom: 0; }
+      .carousel > * { width: auto; }
+      .carousel-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+      .carousel-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
     /* Scrollbar Styling */
     ::-webkit-scrollbar {
       width: 8px;
@@ -229,8 +335,7 @@
       <!-- Title & Greeting -->
       <div class="flex items-center gap-4">
         <button type="button" class="relative cursor-pointer group" onclick="openModal('avatar-modal')" title="Tap to edit Avatar!">
-          <div id="header-avatar-display" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-lavender-200 border-4 border-white shadow-md flex items-center justify-center text-3xl overflow-hidden">
-            👧🏻
+          <div id="header-avatar-display" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-lavender-200 border-4 border-white shadow-md overflow-hidden">
           </div>
           <span class="absolute -bottom-2 -right-2 bg-lavender-500 text-white rounded-full w-9 h-9 flex items-center justify-center text-sm shadow hover:scale-110 transition">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
@@ -243,8 +348,9 @@
           </div>
           <p class="text-sm text-lavender-700 font-medium mt-1">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20.3</span>
           </p>
+          <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1.5 max-w-md leading-snug"></p>
         </div>
       </div>
 
@@ -319,18 +425,21 @@
 
           <div class="my-4 border-t border-lavender-100"></div>
 
-          <!-- Mood Box (honest replacement for the fake weather) -->
-          <div class="flex items-center justify-between bg-lavender-50/80 p-3 rounded-2xl border border-lavender-100">
-            <div class="flex items-center gap-3">
-              <div id="mood-icon" class="text-3xl">🌸</div>
-              <div class="text-left">
-                <p id="mood-label" class="text-lg font-bold text-slate-800">Pick your mood!</p>
-                <p class="text-xs text-slate-500 font-medium">How are you feeling today?</p>
+          <!-- Weather (live from Open-Meteo, no account needed) -->
+          <div class="bg-lavender-50/80 p-3 rounded-2xl border border-lavender-100 text-left">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-3">
+                <div id="weather-now-icon" class="text-3xl">⛅</div>
+                <div>
+                  <p id="weather-now-temp" class="text-lg font-bold text-slate-800">--°</p>
+                  <p id="weather-now-desc" class="text-xs text-slate-500 font-medium">Checking the sky...</p>
+                </div>
               </div>
+              <p id="weather-updated" class="text-[10px] text-slate-400 font-semibold text-right leading-tight"></p>
             </div>
-            <button onclick="openModal('mood-modal')" class="text-xs bg-white text-lavender-600 font-bold px-4 py-3 rounded-xl border border-lavender-200 hover:bg-lavender-100 transition">
-              Change 🌤️
-            </button>
+            <div class="grid grid-cols-3 gap-2" id="weather-forecast">
+              <!-- Dynamically populated -->
+            </div>
           </div>
         </div>
 
@@ -355,6 +464,12 @@
           <!-- Days -->
           <div class="grid grid-cols-7 text-center text-xs gap-1 font-semibold text-slate-600" id="calendar-days">
             <!-- Dynamically populated -->
+          </div>
+
+          <!-- Tapped-day details -->
+          <div id="day-details" class="mt-3 p-3 bg-lavender-50/80 border border-lavender-100 rounded-2xl hidden">
+            <p id="day-details-title" class="text-xs font-bold text-lavender-800 mb-1"></p>
+            <div id="day-details-body" class="text-xs text-slate-600 font-medium space-y-1"></div>
           </div>
 
           <div class="mt-3 pt-3 border-t border-lavender-100 text-xs flex justify-around text-slate-500 font-medium">
@@ -467,6 +582,37 @@
           </div>
         </div>
 
+        <!-- HOMEWORK & TEST STUDY TRACKER -->
+        <div class="cloud-card p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-xl font-bold text-lavender-900 flex items-center gap-2">
+                <i class="fa-solid fa-book-open text-purple-500"></i> Homework &amp; Test Study Tracker
+              </h2>
+              <p class="text-xs text-lavender-600 font-medium">Keep up with tests and assignments! Finished ones disappear the next day.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <a href="https://classroom.google.com" target="_blank" class="bg-emerald-100 text-emerald-700 font-bold text-xs px-3 py-3 rounded-xl border border-emerald-200 hover:bg-emerald-200 transition flex items-center gap-1.5">
+                <span>📚</span> Google Classroom
+              </a>
+              <button onclick="openSnapModal()" class="bg-white text-lavender-700 font-bold text-xs px-4 py-3 rounded-xl border-2 border-lavender-200 hover:bg-lavender-50 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-camera text-pink-400"></i> Snap &amp; Add
+              </button>
+              <button onclick="openModal('homework-modal')" class="bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-md hover:opacity-90 transition flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Add Homework / Test
+              </button>
+            </div>
+          </div>
+
+          <!-- Homework List -->
+          <div class="space-y-3" id="homework-list">
+            <!-- Dynamically populated -->
+          </div>
+          <p id="homework-empty" class="text-sm text-slate-400 font-semibold text-center py-4 hidden">
+            🎉 Nothing on the list — you're all caught up!
+          </p>
+        </div>
+
         <!-- 6TH GRADE TEACHERS & CLASSES HUB -->
         <div class="cloud-card p-6">
           <h2 class="text-xl font-bold text-lavender-900 mb-1 flex items-center gap-2">
@@ -474,7 +620,7 @@
           </h2>
           <p class="text-xs text-lavender-600 font-medium mb-4">Your class directory for this school year!</p>
 
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+          <div class="carousel carousel-6 gap-3">
             <!-- Mrs. Bolard (Homeroom) -->
             <div class="bg-gradient-to-b from-purple-50 to-white p-3 rounded-2xl border border-purple-100 text-center shadow-sm hover:scale-105 transition">
               <div class="w-10 h-10 mx-auto rounded-full bg-purple-200 flex items-center justify-center text-lg mb-1">🏡</div>
@@ -519,63 +665,81 @@
           </div>
         </div>
 
-        <!-- HOMEWORK & TEST STUDY TRACKER -->
-        <div class="cloud-card p-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-            <div>
-              <h2 class="text-xl font-bold text-lavender-900 flex items-center gap-2">
-                <i class="fa-solid fa-book-open text-purple-500"></i> Homework &amp; Test Study Tracker
-              </h2>
-              <p class="text-xs text-lavender-600 font-medium">Keep up with tests and assignments! Finished ones disappear the next day.</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <a href="https://classroom.google.com" target="_blank" class="bg-emerald-100 text-emerald-700 font-bold text-xs px-3 py-3 rounded-xl border border-emerald-200 hover:bg-emerald-200 transition flex items-center gap-1.5">
-                <span>📚</span> Google Classroom
-              </a>
-              <button onclick="openModal('homework-modal')" class="bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-md hover:opacity-90 transition flex items-center gap-2">
-                <i class="fa-solid fa-plus"></i> Add Homework / Test
-              </button>
-            </div>
-          </div>
-
-          <!-- Homework List -->
-          <div class="space-y-3" id="homework-list">
-            <!-- Dynamically populated -->
-          </div>
-          <p id="homework-empty" class="text-sm text-slate-400 font-semibold text-center py-4 hidden">
-            🎉 Nothing on the list — you're all caught up!
-          </p>
-        </div>
-
         <!-- BADGES & ACHIEVEMENTS -->
         <div class="cloud-card p-6">
           <h2 class="text-xl font-bold text-lavender-900 mb-3 flex items-center gap-2">
             <i class="fa-solid fa-award text-amber-400"></i> Antonella's Achievement Badges
           </h2>
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-gradient-to-b from-purple-50 to-white p-3 rounded-2xl border border-purple-100 text-center shadow-sm">
-              <div class="text-3xl mb-1">🥋</div>
-              <h4 class="text-xs font-bold text-slate-800">BJJ Champ</h4>
-              <p class="text-[10px] text-purple-600 font-semibold">Tues &amp; Thurs Warrior</p>
+          <div class="carousel carousel-4 gap-3">
+            <!-- BJJ Warrior -->
+            <div class="bg-gradient-to-b from-purple-50 to-white p-4 rounded-2xl border border-purple-100 text-center shadow-sm">
+              <svg viewBox="0 0 80 80" class="w-16 h-16 mx-auto mb-1.5">
+                <defs><linearGradient id="bdg-bjj" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#6366f1"/>
+                </linearGradient></defs>
+                <circle cx="40" cy="40" r="33" fill="#ffffff" stroke="url(#bdg-bjj)" stroke-width="5"/>
+                <g stroke="#7c3aed" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 38 H58"/>
+                  <path d="M40 44 L31 58"/>
+                  <path d="M40 44 L49 58"/>
+                </g>
+                <rect x="33" y="33" width="14" height="11" rx="2.5" fill="#7c3aed"/>
+              </svg>
+              <h4 class="text-xs font-bold text-slate-800">BJJ Warrior</h4>
+              <p class="text-[10px] text-purple-600 font-semibold">Mat time every week</p>
             </div>
 
-            <div class="bg-gradient-to-b from-pink-50 to-white p-3 rounded-2xl border border-pink-100 text-center shadow-sm">
-              <div class="text-3xl mb-1">🐶</div>
-              <h4 class="text-xs font-bold text-slate-800">Best Dog Helper</h4>
-              <p class="text-[10px] text-pink-600 font-semibold">Water Bowl Master</p>
+            <!-- Dog Duty Pro -->
+            <div class="bg-gradient-to-b from-pink-50 to-white p-4 rounded-2xl border border-pink-100 text-center shadow-sm">
+              <svg viewBox="0 0 80 80" class="w-16 h-16 mx-auto mb-1.5">
+                <defs><linearGradient id="bdg-dog" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#fb7185"/>
+                </linearGradient></defs>
+                <circle cx="40" cy="40" r="33" fill="#ffffff" stroke="url(#bdg-dog)" stroke-width="5"/>
+                <g fill="#ec4899">
+                  <circle cx="33" cy="30" r="4.5"/>
+                  <circle cx="47" cy="30" r="4.5"/>
+                  <circle cx="25" cy="39" r="4"/>
+                  <circle cx="55" cy="39" r="4"/>
+                  <path d="M40 37c-7 0-12 5.5-12 10.5 0 4 3.2 6.8 7 5.8 2-.5 3-1 5-1s3 .5 5 1c3.8 1 7-1.8 7-5.8C52 42.5 47 37 40 37z"/>
+                </g>
+              </svg>
+              <h4 class="text-xs font-bold text-slate-800">Dog Duty Pro</h4>
+              <p class="text-[10px] text-pink-600 font-semibold">Fresh water, every day</p>
             </div>
 
-            <div class="bg-gradient-to-b from-amber-50 to-white p-3 rounded-2xl border border-amber-100 text-center shadow-sm">
-              <div class="text-3xl mb-1">🎸</div>
-              <h4 class="text-xs font-bold text-slate-800">Bass Rockstar</h4>
-              <p class="text-[10px] text-amber-600 font-semibold">Saturday Groove</p>
+            <!-- Bassline Boss -->
+            <div class="bg-gradient-to-b from-amber-50 to-white p-4 rounded-2xl border border-amber-100 text-center shadow-sm">
+              <svg viewBox="0 0 80 80" class="w-16 h-16 mx-auto mb-1.5">
+                <defs><linearGradient id="bdg-bass" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#fb923c"/>
+                </linearGradient></defs>
+                <circle cx="40" cy="40" r="33" fill="#ffffff" stroke="url(#bdg-bass)" stroke-width="5"/>
+                <g stroke="#d97706" stroke-width="4" fill="none" stroke-linecap="round">
+                  <path d="M50 22 V48"/>
+                  <path d="M50 22 C 58 26 60 33 55 39"/>
+                </g>
+                <ellipse cx="43" cy="50" rx="8.5" ry="6.5" fill="#d97706" transform="rotate(-18 43 50)"/>
+              </svg>
+              <h4 class="text-xs font-bold text-slate-800">Bassline Boss</h4>
+              <p class="text-[10px] text-amber-600 font-semibold">Saturday sessions</p>
             </div>
 
-            <div class="bg-gradient-to-b from-emerald-50 to-white p-3 rounded-2xl border border-emerald-100 text-center shadow-sm">
-              <div class="text-3xl mb-1">📚</div>
-              <h4 class="text-xs font-bold text-slate-800">Study Star</h4>
-              <p class="text-[10px] text-emerald-600 font-semibold">6th Grade Ready</p>
+            <!-- Honor Scholar -->
+            <div class="bg-gradient-to-b from-emerald-50 to-white p-4 rounded-2xl border border-emerald-100 text-center shadow-sm">
+              <svg viewBox="0 0 80 80" class="w-16 h-16 mx-auto mb-1.5">
+                <defs><linearGradient id="bdg-book" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#2dd4bf"/>
+                </linearGradient></defs>
+                <circle cx="40" cy="40" r="33" fill="#ffffff" stroke="url(#bdg-book)" stroke-width="5"/>
+                <g stroke="#059669" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M40 29c-5-3.5-11.5-4.5-16-3.5v25c4.5-1 11 0 16 3.5 5-3.5 11.5-4.5 16-3.5v-25c-4.5-1-11 0-16 3.5z"/>
+                  <path d="M40 29 v25"/>
+                </g>
+              </svg>
+              <h4 class="text-xs font-bold text-slate-800">Honor Scholar</h4>
+              <p class="text-[10px] text-emerald-600 font-semibold">Homework handled</p>
             </div>
           </div>
         </div>
@@ -596,40 +760,19 @@
 
       <!-- Preview -->
       <div class="text-center my-4">
-        <div id="modal-avatar-preview" class="w-24 h-24 mx-auto rounded-full bg-lavender-200 border-4 border-white shadow-lg flex items-center justify-center text-5xl">
-          👧🏻
+        <div id="modal-avatar-preview" class="w-24 h-24 mx-auto rounded-full bg-lavender-200 border-4 border-white shadow-lg overflow-hidden">
         </div>
-        <p class="text-xs text-lavender-600 mt-2 font-semibold">Choose your favorite style for Antonella!</p>
+        <p class="text-xs text-lavender-600 mt-2 font-semibold">Pick your vibe ✦</p>
       </div>
 
       <!-- Options -->
-      <div class="grid grid-cols-4 gap-3 my-4">
-        <button onclick="selectAvatar('👧🏻')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">👧🏻</button>
-        <button onclick="selectAvatar('👧🏼')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">👧🏼</button>
-        <button onclick="selectAvatar('👧🏽')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">👧🏽</button>
-        <button onclick="selectAvatar('👧🏾')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">👧🏾</button>
-        <button onclick="selectAvatar('🦋')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">🦋</button>
-        <button onclick="selectAvatar('👑')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">👑</button>
-        <button onclick="selectAvatar('🦄')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">🦄</button>
-        <button onclick="selectAvatar('🥋')" class="p-3 bg-lavender-50 rounded-2xl text-3xl border hover:border-lavender-400">🥋</button>
+      <div class="grid grid-cols-4 gap-3 my-4" id="avatar-options">
+        <!-- Dynamically populated -->
       </div>
 
       <button onclick="closeModal('avatar-modal')" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow hover:opacity-90 transition">
         Save My Avatar!
       </button>
-    </div>
-  </div>
-
-  <!-- MOOD MODAL -->
-  <div id="mood-modal" class="modal">
-    <div class="cloud-card p-6 max-w-md w-full">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xl font-bold text-lavender-900">How do you feel today?</h3>
-        <button onclick="closeModal('mood-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
-      </div>
-      <div class="grid grid-cols-3 gap-3" id="mood-options">
-        <!-- Dynamically populated -->
-      </div>
     </div>
   </div>
 
@@ -735,6 +878,58 @@
     </div>
   </div>
 
+  <!-- SNAP & ADD MODAL -->
+  <div id="snap-modal" class="modal">
+    <div class="cloud-card p-6 max-w-md w-full">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xl font-bold text-lavender-900"><i class="fa-solid fa-camera text-pink-400 mr-1"></i> Snap &amp; Add</h3>
+        <button onclick="closeModal('snap-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
+      </div>
+
+      <!-- Step 1: choose photo -->
+      <div id="snap-step-pick">
+        <p class="text-xs text-slate-500 font-medium mb-3">
+          Take a photo of a Google Classroom assignment or a paper schedule, and I'll read
+          it and fill in the form for you. You always get to check it before it's added!
+        </p>
+        <label class="block w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-sm text-center px-4 py-4 rounded-xl shadow cursor-pointer hover:opacity-90 transition">
+          <i class="fa-solid fa-camera mr-1"></i> Take or Choose a Photo
+          <input type="file" id="snap-input" accept="image/*" capture="environment" class="hidden">
+        </label>
+      </div>
+
+      <!-- Step 2: reading -->
+      <div id="snap-step-reading" class="hidden text-center py-2">
+        <img id="snap-preview" class="max-h-40 mx-auto rounded-xl border-2 border-lavender-100 mb-3" alt="Your photo">
+        <div class="bg-lavender-100 rounded-full h-3 w-full p-0.5 border border-lavender-200 overflow-hidden mb-2">
+          <div id="snap-progress-bar" class="bg-gradient-to-r from-lavender-400 to-pink-400 h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+        </div>
+        <p id="snap-status" class="text-xs font-bold text-lavender-600">Reading your photo... 🔍</p>
+      </div>
+
+      <!-- Step 3: results -->
+      <div id="snap-step-result" class="hidden">
+        <p class="text-xs font-bold text-slate-700 mb-1">Here's what I could read:</p>
+        <textarea id="snap-text" rows="4" class="w-full p-3 rounded-xl border border-lavender-200 text-xs text-slate-600 focus:outline-none focus:border-lavender-400 mb-3"></textarea>
+        <p class="text-xs font-bold text-slate-700 mb-2">What is it? I'll fill in the form:</p>
+        <div class="grid grid-cols-1 gap-2">
+          <button onclick="snapUseHomework()" class="bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-sm px-4 py-3 rounded-xl shadow hover:opacity-90 transition text-left">
+            📝 Homework or Test <span class="font-medium opacity-80">→ opens the homework form</span>
+          </button>
+          <button onclick="snapUseActivity('theater')" class="bg-white text-pink-600 font-bold text-sm px-4 py-3 rounded-xl border-2 border-pink-200 hover:bg-pink-50 transition text-left">
+            🎭 Theater Club schedule
+          </button>
+          <button onclick="snapUseActivity('bass')" class="bg-white text-amber-700 font-bold text-sm px-4 py-3 rounded-xl border-2 border-amber-200 hover:bg-amber-50 transition text-left">
+            🎸 Bass Guitar time
+          </button>
+          <button onclick="resetSnapModal()" class="text-xs text-slate-400 font-bold py-2 hover:text-slate-600">
+            ↺ Try a different photo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- SAVE STATUS BADGE -->
   <div id="save-badge-wrap">
     <div id="backup-badge" class="bg-white/90 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full border border-lavender-200 shadow-sm hidden"></div>
@@ -750,22 +945,10 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.08.20';
+    var APP_VERSION = 'v2026.08.20.3';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
-
-    var MOODS = [
-      { icon: '😊', label: 'Happy' },
-      { icon: '🤩', label: 'Excited' },
-      { icon: '😌', label: 'Calm' },
-      { icon: '😴', label: 'Sleepy' },
-      { icon: '😢', label: 'Sad' },
-      { icon: '😤', label: 'Frustrated' },
-      { icon: '🤒', label: 'Not feeling well' },
-      { icon: '🥰', label: 'Loved' },
-      { icon: '💪', label: 'Strong' }
-    ];
 
     var ROUTINE_EMOJIS = ['✨','🐠','🌱','🧺','👟','📖','🧸','🍽️','🎒','🪥','🐶','🎹'];
 
@@ -774,8 +957,8 @@
       return {
         version: 1,
         stars: 0,
-        avatar: '👧🏻',
-        mood: null, // { date, icon, label }
+        avatar: 'a-mono-lav',
+        weatherCache: null, // { at, current: {temp, code}, daily: [{date, code, hi, lo}] }
         routines: [
           { id: 'r-dog',  name: 'Water the Dog', desc: 'Fresh water every day', emoji: '🐶', stars: 10, custom: false },
           { id: 'r-room', name: 'Clean My Room', desc: 'Tidy desk & floor',     emoji: '🧹', stars: 15, custom: false },
@@ -871,6 +1054,11 @@
           var base = defaultState();
           state = Object.assign(base, loaded);
           state.activities = Object.assign(base.activities, loaded.activities || {});
+          // Migrate old emoji avatars to the new designed set
+          if (!state.avatar || String(state.avatar).indexOf('a-') !== 0) {
+            var emojiMap = { '🦋': 'a-butterfly', '👑': 'a-crown', '🦄': 'a-star', '🥋': 'a-bolt' };
+            state.avatar = emojiMap[state.avatar] || 'a-mono-lav';
+          }
         }
       } catch (err) {
         // Corrupt save: keep defaults rather than crash
@@ -941,18 +1129,16 @@
         label.appendChild(cb);
         label.appendChild(wrap);
 
-        if (r.custom) {
-          var del = document.createElement('button');
-          del.type = 'button';
-          del.className = 'w-9 h-9 rounded-xl text-slate-300 hover:text-red-400 hover:bg-red-50 transition flex items-center justify-center';
-          del.innerHTML = '<i class="fa-solid fa-trash-can text-sm"></i>';
-          del.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            deleteRoutine(r.id);
-          });
-          label.appendChild(del);
-        }
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'w-9 h-9 rounded-xl text-slate-300 hover:text-red-400 hover:bg-red-50 transition flex items-center justify-center';
+        del.innerHTML = '<i class="fa-solid fa-trash-can text-sm"></i>';
+        del.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          deleteRoutine(r.id);
+        });
+        label.appendChild(del);
 
         list.appendChild(label);
       });
@@ -970,6 +1156,11 @@
         state.routineChecked.push(id);
         setStars(state.stars + r.stars);
         starPop();
+        floatStars(r.stars);
+        if (state.routineChecked.length === state.routines.length && state.routines.length > 0) {
+          confettiBurst();
+          showToast('All your daily jobs are done! 🌟 Amazing!');
+        }
       } else if (!nowChecked && idx !== -1) {
         state.routineChecked.splice(idx, 1);
         setStars(state.stars - r.stars);
@@ -1120,6 +1311,7 @@
         hw.doneDate = todayStr();
         setStars(state.stars + hw.stars);
         starPop();
+        floatStars(hw.stars);
         showToast('Great job! ⭐ +' + hw.stars + ' stars!');
       } else if (!nowChecked && hw.done) {
         hw.done = false;
@@ -1147,11 +1339,56 @@
     // ---------- Calendar ----------
     var calYear, calMonth; // currently displayed month
 
+    var selectedCalDay = null; // 'YYYY-MM-DD' of the tapped day
+
     function changeMonth(delta) {
       calMonth += delta;
       if (calMonth < 0) { calMonth = 11; calYear--; }
       if (calMonth > 11) { calMonth = 0; calYear++; }
+      selectedCalDay = null;
+      document.getElementById('day-details').classList.add('hidden');
       renderCalendar();
+    }
+
+    function selectCalDay(dateStr) {
+      selectedCalDay = (selectedCalDay === dateStr) ? null : dateStr; // tap again to close
+      renderCalendar();
+      renderDayDetails();
+    }
+
+    function renderDayDetails() {
+      var panel = document.getElementById('day-details');
+      if (!selectedCalDay) { panel.classList.add('hidden'); return; }
+      var d = parseDateStr(selectedCalDay);
+      if (!d) { panel.classList.add('hidden'); return; }
+
+      document.getElementById('day-details-title').textContent =
+        d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+      var body = document.getElementById('day-details-body');
+      body.innerHTML = '';
+      var items = [];
+      var dw = d.getDay();
+
+      if (d.getMonth() === 11 && d.getDate() === 18) items.push("🎂 Antonella's birthday!!");
+      if (state.activities.bjj.days.indexOf(dw) !== -1)
+        items.push('🥋 BJJ • ' + (state.activities.bjj.time || 'time TBD'));
+      if (state.activities.theater.days.indexOf(dw) !== -1)
+        items.push('🎭 Theater Club • ' + (state.activities.theater.time || 'time TBD'));
+      if (state.activities.bass.days.indexOf(dw) !== -1)
+        items.push('🎸 Bass Guitar • ' + (state.activities.bass.time || 'time TBD'));
+      state.homework.forEach(function (hw) {
+        if (hw.due === selectedCalDay && !hw.done)
+          items.push((hw.type === 'test' ? '🧠 ' : '📝 ') + hw.title + ' (' + hw.subject + ')');
+      });
+
+      if (items.length === 0) items.push('Nothing scheduled — free day! 🌈');
+      items.forEach(function (txt) {
+        var p = document.createElement('p');
+        p.textContent = txt;
+        body.appendChild(p);
+      });
+      panel.classList.remove('hidden');
     }
 
     function activityDaysOfWeek() {
@@ -1190,9 +1427,16 @@
         var date = new Date(calYear, calMonth, day);
         var isToday = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
         var isBirthday = calMonth === 11 && day === 18;
+        var dateStr = todayStr(date);
+        var isSelected = selectedCalDay === dateStr;
 
-        var cell = document.createElement('div');
-        cell.className = 'p-1 flex flex-col items-center justify-center';
+        var cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'p-1 min-h-[42px] flex flex-col items-center justify-center rounded-xl transition ' +
+          (isSelected ? 'bg-lavender-100 ring-2 ring-lavender-400' : 'hover:bg-lavender-50');
+        (function (ds) {
+          cell.addEventListener('click', function () { selectCalDay(ds); });
+        })(dateStr);
 
         var num = document.createElement('span');
         num.className = 'w-6 h-6 flex items-center justify-center text-xs' +
@@ -1222,6 +1466,46 @@
       }
     }
 
+    // ---------- Quote of the day ----------
+    var QUOTES = [
+      { t: 'You are braver than you believe, stronger than you seem, and smarter than you think.', by: 'A.A. Milne' },
+      { t: 'In a world where you can be anything, be kind.', by: 'Unknown' },
+      { t: 'Mistakes are proof that you are trying.', by: 'Unknown' },
+      { t: 'Why fit in when you were born to stand out?', by: 'Dr. Seuss' },
+      { t: "No one is perfect — that's why pencils have erasers.", by: 'Wolfgang Riebe' },
+      { t: "Believe you can and you're halfway there.", by: 'Theodore Roosevelt' },
+      { t: 'It always seems impossible until it is done.', by: 'Nelson Mandela' },
+      { t: "Be a rainbow in someone else's cloud.", by: 'Maya Angelou' },
+      { t: 'If you can dream it, you can do it.', by: 'Walt Disney' },
+      { t: 'Every day may not be good, but there is something good in every day.', by: 'Alice Morse Earle' },
+      { t: 'The more that you read, the more things you will know.', by: 'Dr. Seuss' },
+      { t: 'Kind words can be short and easy to speak, but their echoes are truly endless.', by: 'Mother Teresa' },
+      { t: "You're off to great places! Today is your day!", by: 'Dr. Seuss' },
+      { t: 'Little by little, one travels far.', by: 'Spanish proverb' },
+      { t: 'A little progress each day adds up to big results.', by: 'Unknown' },
+      { t: 'The best way to predict your future is to create it.', by: 'Abraham Lincoln' },
+      { t: 'Do small things with great love.', by: 'Mother Teresa' },
+      { t: "Courage doesn't always roar. Sometimes it's the quiet voice saying, \"I'll try again tomorrow.\"", by: 'Mary Anne Radmacher' },
+      { t: 'When you know better, you do better.', by: 'Maya Angelou' },
+      { t: 'Fall seven times, stand up eight.', by: 'Japanese proverb' },
+      { t: 'Wherever you go, go with all your heart.', by: 'Confucius' },
+      { t: 'Nothing will work unless you do.', by: 'Maya Angelou' },
+      { t: 'Dream big and dare to fail.', by: 'Norman Vaughan' },
+      { t: 'The secret of getting ahead is getting started.', by: 'Mark Twain' },
+      { t: "If opportunity doesn't knock, build a door.", by: 'Milton Berle' },
+      { t: 'No act of kindness, no matter how small, is ever wasted.', by: 'Aesop' },
+      { t: 'Happiness is not by chance, but by choice.', by: 'Jim Rohn' },
+      { t: 'Start where you are. Use what you have. Do what you can.', by: 'Arthur Ashe' },
+      { t: "A star doesn't compete with other stars — it just shines.", by: 'Unknown' },
+      { t: 'Learning is a treasure that will follow its owner everywhere.', by: 'Chinese proverb' }
+    ];
+
+    function renderQuote() {
+      var idx = Math.floor(parseDateStr(todayStr()).getTime() / 86400000) % QUOTES.length;
+      var q = QUOTES[idx];
+      document.getElementById('daily-quote').textContent = '“' + q.t + '” — ' + q.by;
+    }
+
     // ---------- Birthday countdown ----------
     function renderBirthday() {
       var now = parseDateStr(todayStr());
@@ -1238,42 +1522,103 @@
       }
     }
 
-    // ---------- Mood ----------
-    function renderMood() {
-      var iconEl = document.getElementById('mood-icon');
-      var labelEl = document.getElementById('mood-label');
-      var m = state.mood;
-      if (m && m.date === todayStr()) {
-        iconEl.textContent = m.icon;
-        labelEl.textContent = m.label;
-      } else {
-        iconEl.textContent = '🌸';
-        labelEl.textContent = 'Pick your mood!';
-      }
+    // ---------- Weather (Open-Meteo: free, no account, no API key) ----------
+    // Kensington, CT (village of Berlin, CT)
+    var WEATHER_URL = 'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=41.6354&longitude=-72.7715' +
+      '&current=temperature_2m,weather_code' +
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min' +
+      '&temperature_unit=fahrenheit&timezone=America%2FNew_York&forecast_days=3';
+
+    function wmoInfo(code) {
+      if (code === 0) return { icon: '☀️', desc: 'Sunny' };
+      if (code === 1) return { icon: '🌤️', desc: 'Mostly sunny' };
+      if (code === 2) return { icon: '⛅', desc: 'Partly cloudy' };
+      if (code === 3) return { icon: '☁️', desc: 'Cloudy' };
+      if (code === 45 || code === 48) return { icon: '🌫️', desc: 'Foggy' };
+      if (code >= 51 && code <= 57) return { icon: '🌦️', desc: 'Drizzly' };
+      if (code >= 61 && code <= 67) return { icon: '🌧️', desc: 'Rainy' };
+      if (code >= 71 && code <= 77) return { icon: '🌨️', desc: 'Snowy' };
+      if (code >= 80 && code <= 82) return { icon: '🌦️', desc: 'Showers' };
+      if (code === 85 || code === 86) return { icon: '🌨️', desc: 'Snow showers' };
+      if (code >= 95) return { icon: '⛈️', desc: 'Thunderstorms' };
+      return { icon: '🌡️', desc: 'Weather' };
     }
 
-    function renderMoodOptions() {
-      var wrap = document.getElementById('mood-options');
-      wrap.innerHTML = '';
-      MOODS.forEach(function (m) {
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'p-3 min-h-[64px] bg-lavender-50 rounded-2xl border-2 border-transparent hover:border-lavender-400 transition text-center';
-        var em = document.createElement('div');
-        em.className = 'text-3xl';
-        em.textContent = m.icon;
-        var lb = document.createElement('div');
-        lb.className = 'text-[11px] font-bold text-slate-600 mt-1';
-        lb.textContent = m.label;
-        btn.appendChild(em);
-        btn.appendChild(lb);
-        btn.addEventListener('click', function () {
-          state.mood = { date: todayStr(), icon: m.icon, label: m.label };
-          renderMood();
-          closeModal('mood-modal');
+    function fetchWeather() {
+      fetch(WEATHER_URL)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data || !data.current || !data.daily) throw new Error('bad data');
+          var daily = [];
+          for (var i = 0; i < data.daily.time.length; i++) {
+            daily.push({
+              date: data.daily.time[i],
+              code: data.daily.weather_code[i],
+              hi: Math.round(data.daily.temperature_2m_max[i]),
+              lo: Math.round(data.daily.temperature_2m_min[i])
+            });
+          }
+          state.weatherCache = {
+            at: new Date().toISOString(),
+            current: { temp: Math.round(data.current.temperature_2m), code: data.current.weather_code },
+            daily: daily
+          };
+          renderWeather();
           scheduleSave();
+        })
+        .catch(function () {
+          renderWeather(); // show the cached reading (or the "can't reach" note)
         });
-        wrap.appendChild(btn);
+    }
+
+    function renderWeather() {
+      var w = state.weatherCache;
+      var iconEl = document.getElementById('weather-now-icon');
+      var tempEl = document.getElementById('weather-now-temp');
+      var descEl = document.getElementById('weather-now-desc');
+      var updEl = document.getElementById('weather-updated');
+      var fcWrap = document.getElementById('weather-forecast');
+
+      if (!w) {
+        iconEl.textContent = '🌫️';
+        tempEl.textContent = '--°';
+        descEl.textContent = "Can't reach the weather right now";
+        updEl.textContent = '';
+        fcWrap.innerHTML = '';
+        return;
+      }
+
+      var now = wmoInfo(w.current.code);
+      iconEl.textContent = now.icon;
+      tempEl.textContent = w.current.temp + '°F';
+      descEl.textContent = now.desc + ' in Kensington';
+      var at = new Date(w.at);
+      updEl.textContent = 'updated ' + at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+      fcWrap.innerHTML = '';
+      w.daily.forEach(function (day, i) {
+        var d = parseDateStr(day.date);
+        var info = wmoInfo(day.code);
+        var tile = document.createElement('div');
+        tile.className = 'bg-white/80 border border-lavender-100 rounded-xl p-2 text-center';
+
+        var name = document.createElement('p');
+        name.className = 'text-[10px] font-bold text-lavender-600 uppercase tracking-wide';
+        name.textContent = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+
+        var ic = document.createElement('div');
+        ic.className = 'text-xl leading-tight my-0.5';
+        ic.textContent = info.icon;
+
+        var temps = document.createElement('p');
+        temps.className = 'text-[11px] font-bold text-slate-700';
+        temps.innerHTML = day.hi + '° <span class="text-slate-400 font-semibold">' + day.lo + '°</span>';
+
+        tile.appendChild(name);
+        tile.appendChild(ic);
+        tile.appendChild(temps);
+        fcWrap.appendChild(tile);
       });
     }
 
@@ -1329,16 +1674,91 @@
       });
     }
 
-    // ---------- Avatar ----------
-    function selectAvatar(emoji) {
-      state.avatar = emoji;
+    // ---------- Avatar (gradient line-art, not baby emoji!) ----------
+    var LINE_ATTRS = 'stroke="#ffffff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+
+    var AVATARS = [
+      { id: 'a-mono-lav',    c1: '#b78af0', c2: '#f472b6', art: '<text x="50" y="54" text-anchor="middle" dominant-baseline="middle" font-family="Quicksand, sans-serif" font-weight="700" font-size="46" fill="#ffffff">A</text>' },
+      { id: 'a-mono-indigo', c1: '#818cf8', c2: '#c084fc', art: '<text x="50" y="54" text-anchor="middle" dominant-baseline="middle" font-family="Quicksand, sans-serif" font-weight="700" font-size="46" fill="#ffffff">A</text>' },
+      { id: 'a-mono-sunset', c1: '#fb923c', c2: '#f472b6', art: '<text x="50" y="54" text-anchor="middle" dominant-baseline="middle" font-family="Quicksand, sans-serif" font-weight="700" font-size="46" fill="#ffffff">A</text>' },
+      { id: 'a-mono-ocean',  c1: '#38bdf8', c2: '#2dd4bf', art: '<text x="50" y="54" text-anchor="middle" dominant-baseline="middle" font-family="Quicksand, sans-serif" font-weight="700" font-size="46" fill="#ffffff">A</text>' },
+      { id: 'a-butterfly', c1: '#a78bfa', c2: '#f472b6', art:
+        '<g ' + LINE_ATTRS + '>' +
+        '<path d="M50 38 C 46 31, 41 28, 38 31"/>' +
+        '<path d="M50 38 C 54 31, 59 28, 62 31"/>' +
+        '<path d="M50 38 V 68"/>' +
+        '<path d="M50 46 C 32 28, 16 34, 22 49 C 26 58, 42 57, 50 51"/>' +
+        '<path d="M50 46 C 68 28, 84 34, 78 49 C 74 58, 58 57, 50 51"/>' +
+        '<path d="M50 55 C 38 62, 31 73, 40 77 C 47 79, 50 68, 50 62"/>' +
+        '<path d="M50 55 C 62 62, 69 73, 60 77 C 53 79, 50 68, 50 62"/>' +
+        '</g>' },
+      { id: 'a-moon', c1: '#6366f1', c2: '#a855f7', art:
+        '<path d="M62 26c-12-1-23 8-24 21-1 14 9 25 22 26-6-6-9-15-8-24 1-9 5-17 10-23z" fill="#ffffff"/>' +
+        '<path d="M66 36l2.2 5.3 5.3 2.2-5.3 2.2L66 51l-2.2-5.3-5.3-2.2 5.3-2.2z" fill="#ffffff"/>' },
+      { id: 'a-crown', c1: '#fbbf24', c2: '#fb7185', art:
+        '<g ' + LINE_ATTRS + '><path d="M29 61 V 42 L 40 51 L 50 34 L 60 51 L 71 42 V 61 Z"/><path d="M29 68 H 71"/></g>' },
+      { id: 'a-bolt', c1: '#e879f9', c2: '#8b5cf6', art:
+        '<path d="M55 22 L34 55 H47 L43 78 L66 44 H53 Z" fill="#ffffff"/>' },
+      { id: 'a-heart', c1: '#fb7185', c2: '#f472b6', art:
+        '<path d="M50 74 C 29 59 23 45 31 37 C 37 31 47 33 50 41 C 53 33 63 31 69 37 C 77 45 71 59 50 74 Z" fill="#ffffff"/>' },
+      { id: 'a-flower', c1: '#34d399', c2: '#22d3ee', art:
+        '<g fill="none" stroke="#ffffff" stroke-width="4.5">' +
+        '<ellipse cx="50" cy="31" rx="8" ry="13"/>' +
+        '<ellipse cx="50" cy="31" rx="8" ry="13" transform="rotate(60 50 50)"/>' +
+        '<ellipse cx="50" cy="31" rx="8" ry="13" transform="rotate(120 50 50)"/>' +
+        '<ellipse cx="50" cy="31" rx="8" ry="13" transform="rotate(180 50 50)"/>' +
+        '<ellipse cx="50" cy="31" rx="8" ry="13" transform="rotate(240 50 50)"/>' +
+        '<ellipse cx="50" cy="31" rx="8" ry="13" transform="rotate(300 50 50)"/>' +
+        '</g><circle cx="50" cy="50" r="8" fill="#ffffff"/>' },
+      { id: 'a-star', c1: '#a855f7', c2: '#ec4899', art:
+        '<path d="M50 24 L57.5 41.5 L76 43.5 L62 56 L66.5 74 L50 64.5 L33.5 74 L38 56 L24 43.5 L42.5 41.5 Z" fill="#ffffff"/>' },
+      { id: 'a-note', c1: '#38bdf8', c2: '#818cf8', art:
+        '<g stroke="#ffffff" stroke-width="4.5" fill="none" stroke-linecap="round"><path d="M60 26 V 60"/><path d="M60 26 C 69 30 71 37 66 44"/></g>' +
+        '<ellipse cx="52" cy="62" rx="9" ry="7" fill="#ffffff" transform="rotate(-15 52 62)"/>' }
+    ];
+
+    function getAvatar(id) {
+      for (var i = 0; i < AVATARS.length; i++) if (AVATARS[i].id === id) return AVATARS[i];
+      return AVATARS[0];
+    }
+
+    function avatarSVG(a) {
+      return '<svg class="avatar-svg" viewBox="0 0 100 100" role="img" aria-label="avatar">' +
+        '<defs><linearGradient id="grad-' + a.id + '" x1="0" y1="0" x2="1" y2="1">' +
+        '<stop offset="0" stop-color="' + a.c1 + '"/><stop offset="1" stop-color="' + a.c2 + '"/>' +
+        '</linearGradient></defs>' +
+        '<circle cx="50" cy="50" r="50" fill="url(#grad-' + a.id + ')"/>' +
+        a.art + '</svg>';
+    }
+
+    function selectAvatar(id) {
+      state.avatar = id;
       renderAvatar();
+      renderAvatarOptions();
       scheduleSave();
     }
 
     function renderAvatar() {
-      document.getElementById('header-avatar-display').textContent = state.avatar;
-      document.getElementById('modal-avatar-preview').textContent = state.avatar;
+      var a = getAvatar(state.avatar);
+      document.getElementById('header-avatar-display').innerHTML = avatarSVG(a);
+      document.getElementById('modal-avatar-preview').innerHTML = avatarSVG(a);
+    }
+
+    function renderAvatarOptions() {
+      var wrap = document.getElementById('avatar-options');
+      wrap.innerHTML = '';
+      AVATARS.forEach(function (a) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'p-0.5 rounded-full border-2 transition aspect-square ' +
+          (a.id === state.avatar ? 'border-lavender-500 scale-105' : 'border-transparent hover:border-lavender-300');
+        var inner = document.createElement('div');
+        inner.className = 'w-full h-full rounded-full overflow-hidden';
+        inner.innerHTML = avatarSVG(a);
+        btn.appendChild(inner);
+        btn.addEventListener('click', function () { selectAvatar(a.id); });
+        wrap.appendChild(btn);
+      });
     }
 
     // ---------- Backup / Restore ----------
@@ -1489,6 +1909,266 @@
       }
     });
 
+    // ---------- Motion & delight ----------
+    function motionOK() {
+      return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
+    function floatStars(amount) {
+      if (!motionOK()) return;
+      var anchor = document.getElementById('star-count');
+      var rect = anchor.getBoundingClientRect();
+      var el = document.createElement('div');
+      el.className = 'star-float text-sm';
+      el.textContent = '+' + amount + ' ⭐';
+      el.style.left = (rect.left + rect.width / 2 - 20) + 'px';
+      el.style.top = (rect.top - 6) + 'px';
+      document.body.appendChild(el);
+      setTimeout(function () { el.remove(); }, 1200);
+    }
+
+    var CONFETTI_BITS = ['🦋', '✨', '⭐', '💜', '🌸'];
+    function confettiBurst() {
+      if (!motionOK()) return;
+      for (var i = 0; i < 26; i++) {
+        var bit = document.createElement('div');
+        bit.className = 'confetti';
+        bit.textContent = CONFETTI_BITS[i % CONFETTI_BITS.length];
+        bit.style.left = (Math.random() * 100) + 'vw';
+        bit.style.fontSize = (14 + Math.random() * 14) + 'px';
+        bit.style.animationDuration = (2.5 + Math.random() * 1.8) + 's';
+        bit.style.animationDelay = (Math.random() * 0.5) + 's';
+        document.body.appendChild(bit);
+        setTimeout(function (b) { return function () { b.remove(); }; }(bit), 5200);
+      }
+    }
+
+    function launchFlyby() {
+      if (!motionOK()) return;
+      var fly = document.createElement('div');
+      fly.className = 'fly-across';
+      fly.style.top = (12 + Math.random() * 55) + 'vh';
+      var inner = document.createElement('span');
+      inner.className = 'text-2xl';
+      inner.textContent = '🦋';
+      fly.appendChild(inner);
+      document.body.appendChild(fly);
+      setTimeout(function () { fly.remove(); }, 17000);
+    }
+
+    // ---------- Snap & Add (photo reader) ----------
+    var TESSERACT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    var tessLoadPromise = null;
+    var snapParsed = null;
+
+    function ensureTesseract() {
+      if (window.Tesseract) return Promise.resolve();
+      if (tessLoadPromise) return tessLoadPromise;
+      tessLoadPromise = new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = TESSERACT_URL;
+        s.onload = resolve;
+        s.onerror = function () { tessLoadPromise = null; reject(new Error('script load failed')); };
+        document.head.appendChild(s);
+      });
+      return tessLoadPromise;
+    }
+
+    function openSnapModal() {
+      resetSnapModal();
+      openModal('snap-modal');
+    }
+
+    function resetSnapModal() {
+      snapParsed = null;
+      document.getElementById('snap-input').value = '';
+      document.getElementById('snap-step-pick').classList.remove('hidden');
+      document.getElementById('snap-step-reading').classList.add('hidden');
+      document.getElementById('snap-step-result').classList.add('hidden');
+      document.getElementById('snap-progress-bar').style.width = '0%';
+    }
+
+    function snapShowStep(step) {
+      ['snap-step-pick', 'snap-step-reading', 'snap-step-result'].forEach(function (id) {
+        document.getElementById(id).classList.toggle('hidden', id !== step);
+      });
+    }
+
+    document.getElementById('snap-input').addEventListener('change', function (evt) {
+      var file = evt.target.files && evt.target.files[0];
+      if (!file) return;
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        // Downscale for faster, better OCR
+        var maxSide = 1600;
+        var scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        document.getElementById('snap-preview').src = url;
+        snapShowStep('snap-step-reading');
+        document.getElementById('snap-status').textContent = 'Warming up the reader... 📖';
+        runSnapOCR(canvas);
+      };
+      img.onerror = function () {
+        showToast("That doesn't look like a photo I can open — try again!");
+      };
+      img.src = url;
+    });
+
+    function runSnapOCR(canvas) {
+      ensureTesseract().then(function () {
+        return window.Tesseract.recognize(canvas, 'eng', {
+          logger: function (m) {
+            if (m.status === 'recognizing text') {
+              document.getElementById('snap-progress-bar').style.width = Math.round(m.progress * 100) + '%';
+              document.getElementById('snap-status').textContent = 'Reading your photo... 🔍';
+            }
+          }
+        });
+      }).then(function (result) {
+        var text = (result && result.data && result.data.text || '').trim();
+        if (!text) {
+          snapShowStep('snap-step-pick');
+          showToast("I couldn't find any words in that photo 😔 Try a closer, brighter shot!");
+          return;
+        }
+        document.getElementById('snap-text').value = text;
+        snapParsed = parseSnapText(text);
+        snapShowStep('snap-step-result');
+      }).catch(function () {
+        snapShowStep('snap-step-pick');
+        showToast("The photo reader couldn't start (it needs internet the first time). You can still add things by hand!");
+      });
+    }
+
+    var MONTH_PREFIXES = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+    var WEEKDAY_NAMES = [
+      ['sunday','sun'], ['monday','mon'], ['tuesday','tues','tue'], ['wednesday','wed'],
+      ['thursday','thurs','thur','thu'], ['friday','fri'], ['saturday','sat']
+    ];
+
+    function nextDateForWeekday(dw) {
+      var d = parseDateStr(todayStr());
+      var delta = (dw - d.getDay() + 7) % 7;
+      if (delta === 0) delta = 7;
+      d.setDate(d.getDate() + delta);
+      return todayStr(d);
+    }
+
+    function findSnapDate(lower) {
+      var now = parseDateStr(todayStr());
+      if (lower.indexOf('tomorrow') !== -1) {
+        var t = new Date(now); t.setDate(t.getDate() + 1); return todayStr(t);
+      }
+      // "Sep 4" / "September 4"
+      var m = lower.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})\b/);
+      if (m) {
+        var mi = MONTH_PREFIXES.indexOf(m[1]);
+        var d1 = new Date(now.getFullYear(), mi, Number(m[2]));
+        if (d1 < now) d1.setFullYear(d1.getFullYear() + 1);
+        return todayStr(d1);
+      }
+      // "9/4" or "9/4/26"
+      m = lower.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
+      if (m) {
+        var yr = m[3] ? Number(m[3]) : now.getFullYear();
+        if (yr < 100) yr += 2000;
+        var d2 = new Date(yr, Number(m[1]) - 1, Number(m[2]));
+        if (!m[3] && d2 < now) d2.setFullYear(d2.getFullYear() + 1);
+        if (!isNaN(d2.getTime())) return todayStr(d2);
+      }
+      // A weekday name → its next occurrence
+      for (var dw = 0; dw < 7; dw++) {
+        for (var j = 0; j < WEEKDAY_NAMES[dw].length; j++) {
+          if (new RegExp('\\b' + WEEKDAY_NAMES[dw][j] + '\\b').test(lower)) return nextDateForWeekday(dw);
+        }
+      }
+      return null;
+    }
+
+    function findSnapWeekdays(lower) {
+      var days = [];
+      for (var dw = 0; dw < 7; dw++) {
+        for (var j = 0; j < WEEKDAY_NAMES[dw].length; j++) {
+          if (new RegExp('\\b' + WEEKDAY_NAMES[dw][j] + '\\b').test(lower)) {
+            if (days.indexOf(dw) === -1) days.push(dw);
+            break;
+          }
+        }
+      }
+      return days;
+    }
+
+    function parseSnapText(text) {
+      var lower = text.toLowerCase();
+      var res = { subject: null, type: 'homework', due: null, days: [], time: '', title: '' };
+
+      var subjectHints = [
+        ['mokhiber', 'Math (Mrs. Mokhiber)'], ['math', 'Math (Mrs. Mokhiber)'],
+        ['hagist', 'Science (Mrs. Hagist)'], ['science', 'Science (Mrs. Hagist)'],
+        ['cartiera', 'Spanish (Sra. Cartiera)'], ['spanish', 'Spanish (Sra. Cartiera)'], ['español', 'Spanish (Sra. Cartiera)'],
+        ['grant', 'Religion (Mr. Grant)'], ['religion', 'Religion (Mr. Grant)'],
+        ['literature', 'LA / Lit (Ms. T)'], ['language arts', 'LA / Lit (Ms. T)'],
+        ['english', 'LA / Lit (Ms. T)'], ['reading', 'LA / Lit (Ms. T)'],
+        ['chapter', 'LA / Lit (Ms. T)'], ['essay', 'LA / Lit (Ms. T)'],
+        ['bolard', 'Homeroom (Mrs. Bolard)'], ['homeroom', 'Homeroom (Mrs. Bolard)']
+      ];
+      for (var i = 0; i < subjectHints.length; i++) {
+        if (lower.indexOf(subjectHints[i][0]) !== -1) { res.subject = subjectHints[i][1]; break; }
+      }
+
+      if (/(test|quiz|exam)/.test(lower)) res.type = 'test';
+      res.due = findSnapDate(lower);
+      res.days = findSnapWeekdays(lower);
+
+      // Prefer a full range like "3:30 - 4:45 PM" (first time may lack AM/PM), else a single time
+      var tm = text.match(/\d{1,2}(:\d{2})?\s*(a\.?m\.?|p\.?m\.?)?\s*[-–—]\s*\d{1,2}(:\d{2})?\s*(a\.?m\.?|p\.?m\.?)/i) ||
+               text.match(/\d{1,2}(:\d{2})?\s*(a\.?m\.?|p\.?m\.?)/i);
+      if (tm) res.time = tm[0].replace(/\s+/g, ' ').toUpperCase();
+
+      // Title guess: the meatiest line that isn't just dates/times/labels
+      var best = '', bestScore = 0;
+      text.split(/\n+/).forEach(function (line) {
+        var clean = line.trim();
+        if (clean.length < 4 || clean.length > 90) return;
+        if (/^[\d\s\/:.\-–—apmAPM]+$/.test(clean)) return; // pure date/time line
+        if (/^(due|posted|points|assigned|turn in|class comments?)\b/i.test(clean)) return;
+        var score = (clean.match(/[a-zA-Z]/g) || []).length;
+        if (score > bestScore) { bestScore = score; best = clean; }
+      });
+      res.title = best.slice(0, 80);
+      return res;
+    }
+
+    function snapUseHomework() {
+      if (!snapParsed) return;
+      // Re-parse in case she fixed the text by hand
+      snapParsed = parseSnapText(document.getElementById('snap-text').value);
+      if (snapParsed.subject) document.getElementById('hw-subject').value = snapParsed.subject;
+      document.getElementById('hw-type').value = snapParsed.type;
+      if (snapParsed.title) document.getElementById('hw-title').value = snapParsed.title;
+      if (snapParsed.due) document.getElementById('hw-due').value = snapParsed.due;
+      closeModal('snap-modal');
+      openModal('homework-modal');
+      showToast('I filled in what I could read — check it, then tap Add! ✨');
+    }
+
+    function snapUseActivity(which) {
+      if (!snapParsed) return;
+      snapParsed = parseSnapText(document.getElementById('snap-text').value);
+      closeModal('snap-modal');
+      openActivityModal(which);
+      if (which === 'theater' && snapParsed.days.length) {
+        selectedActivityDays = snapParsed.days.slice();
+        renderActivityDayOptions();
+      }
+      if (snapParsed.time) document.getElementById('activity-time').value = snapParsed.time;
+      showToast('I filled in what I could read — check it, then Save! ✨');
+    }
+
     var toastTimer = null;
     function showToast(msg) {
       var t = document.getElementById('toast');
@@ -1576,7 +2256,8 @@
       renderHomework();
       renderCalendar();
       renderBirthday();
-      renderMood();
+      renderQuote();
+      renderWeather();
       renderActivityTexts();
       renderBackupLabels();
     }
@@ -1589,10 +2270,26 @@
       calYear = now.getFullYear();
       calMonth = now.getMonth();
 
-      renderMoodOptions();
       renderRoutineEmojiOptions();
+      renderAvatarOptions();
       renderAll();
       maybeShowBackupReminder();
+
+      // Live weather: fetch now and refresh every 30 minutes
+      fetchWeather();
+      setInterval(fetchWeather, 30 * 60 * 1000);
+
+      // Staggered entrance for the cards (skip modal cards)
+      var delay = 0;
+      document.querySelectorAll('.cloud-card').forEach(function (card) {
+        if (card.closest('.modal')) return;
+        card.style.animationDelay = delay + 'ms';
+        delay += 70;
+      });
+
+      // A butterfly flutters across now and then
+      setTimeout(launchFlyby, 4000);
+      setInterval(launchFlyby, 42000);
 
       updateClock();
       setInterval(updateClock, 1000);
