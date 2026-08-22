@@ -521,7 +521,7 @@
           </div>
           <p class="text-xs sm:text-sm text-lavender-700 font-medium mt-0.5">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.22.4</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.22.5</span>
           </p>
           <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1 max-w-md leading-snug"></p>
         </div>
@@ -1336,7 +1336,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.08.22.4';
+    var APP_VERSION = 'v2026.08.22.5';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
@@ -2783,10 +2783,12 @@
     }
 
     function buildBackupPayload() {
+      // Only THIS dashboard's keys: every site on the same GitHub account shares
+      // browser storage, so the planner's / Carmine's data must stay out of this backup.
       var data = {};
       for (var i = 0; i < localStorage.length; i++) {
         var key = localStorage.key(i);
-        data[key] = localStorage.getItem(key);
+        if (key.indexOf('antonella_') === 0) data[key] = localStorage.getItem(key);
       }
       return JSON.stringify({
         app: 'antonella-dashboard',
@@ -2859,6 +2861,7 @@
             return;
           }
           Object.keys(data).forEach(function (key) {
+            if (key.indexOf('antonella_') !== 0) return; // never touch other dashboards' data
             try { localStorage.setItem(key, data[key]); } catch (e) {}
           });
           location.reload();
