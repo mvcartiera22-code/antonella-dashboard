@@ -53,15 +53,77 @@
       overflow-x: hidden;
     }
 
-    /* Floating Cloud Effect */
+    /* ---------- Liquid glass cards ---------- */
     .cloud-card {
-      background: rgba(255, 255, 255, 0.90);
-      backdrop-filter: blur(8px);
-      border: 3px solid #ffffff;
+      background: rgba(255, 255, 255, 0.58);
+      backdrop-filter: blur(18px) saturate(170%);
+      -webkit-backdrop-filter: blur(18px) saturate(170%);
+      border: 1px solid rgba(255, 255, 255, 0.85);
       border-radius: 28px;
-      box-shadow: 0 10px 25px -5px rgba(136, 67, 206, 0.15), 0 8px 10px -6px rgba(136, 67, 206, 0.1);
+      box-shadow:
+        0 12px 32px -10px rgba(136, 67, 206, 0.22),
+        0 2px 6px rgba(136, 67, 206, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 0 rgba(159, 98, 226, 0.10);
       position: relative;
+      overflow: hidden;
     }
+    /* Specular highlight across the glass */
+    .cloud-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: linear-gradient(125deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 62%, rgba(255,255,255,0.30) 100%);
+      z-index: 0;
+    }
+    /* Light sheen that sweeps across when a card is tapped */
+    .cloud-card::after {
+      content: '';
+      position: absolute;
+      top: -60%;
+      left: -70%;
+      width: 45%;
+      height: 220%;
+      background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 100%);
+      transform: skewX(-18deg);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .cloud-card.sheen::after { animation: sheenSweep 1s ease-out; }
+    @keyframes sheenSweep {
+      0% { left: -70%; opacity: 0; }
+      15% { opacity: 1; }
+      100% { left: 130%; opacity: 0; }
+    }
+    .cloud-card > * { position: relative; z-index: 1; }
+
+    /* Drifting color blobs behind the glass */
+    .bg-blobs {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.6;
+      will-change: transform;
+    }
+    .blob-1 { width: 48vw; height: 48vw; background: #c4a4f5; top: -12vw; left: -12vw; }
+    .blob-2 { width: 42vw; height: 42vw; background: #fbcfe8; top: 28vh; right: -14vw; }
+    .blob-3 { width: 38vw; height: 38vw; background: #a7f3d0; bottom: -14vw; left: 18vw; }
+    .blob-4 { width: 30vw; height: 30vw; background: #bae6fd; top: 58vh; left: -10vw; }
+
+    /* Lite mode: flat cards, no blur, no critters (for slower tablets) */
+    body.lite .cloud-card { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(255,255,255,0.92); }
+    body.lite .cloud-card::before, body.lite .cloud-card::after { display: none; }
+    body.lite .bg-blobs, body.lite .critter, body.lite .fly-across, body.lite .firefly { display: none !important; }
 
     /* Hanging Leaves Top Decor */
     .hanging-leaves-container {
@@ -75,27 +137,72 @@
       overflow: hidden;
     }
 
-    /* Floating Butterflies */
-    .butterfly {
-      position: absolute;
+    /* ---------- Critters: butterflies, bees, ladybugs, fireflies ---------- */
+    .critter {
+      position: fixed;
       pointer-events: none;
-      animation: float 6s ease-in-out infinite;
       z-index: 30;
+      user-select: none;
     }
+    .butterfly { animation: float 6s ease-in-out infinite; }
+    .butterfly-2 { animation: float2 8s ease-in-out infinite; }
+    .bee { animation: beeBuzz 11s ease-in-out infinite; }
+    .ladybug { animation: crawl 40s linear infinite; }
 
     @keyframes float {
       0%, 100% { transform: translateY(0px) rotate(0deg); }
       50% { transform: translateY(-12px) rotate(5deg); }
     }
-
-    .butterfly-2 {
-      animation: float2 8s ease-in-out infinite;
-    }
-
     @keyframes float2 {
       0%, 100% { transform: translateY(0px) rotate(0deg); }
       50% { transform: translateY(15px) rotate(-8deg); }
     }
+    @keyframes beeBuzz {
+      0%   { transform: translate(0, 0) rotate(-8deg); }
+      20%  { transform: translate(-40px, 22px) rotate(10deg); }
+      40%  { transform: translate(18px, 48px) rotate(-12deg); }
+      60%  { transform: translate(-26px, 30px) rotate(8deg); }
+      80%  { transform: translate(30px, 10px) rotate(-6deg); }
+      100% { transform: translate(0, 0) rotate(-8deg); }
+    }
+    @keyframes crawl {
+      0%   { transform: translateX(0) rotate(0deg); }
+      48%  { transform: translateX(38vw) rotate(0deg); }
+      50%  { transform: translateX(38vw) rotate(180deg) scaleY(-1); }
+      98%  { transform: translateX(0) rotate(180deg) scaleY(-1); }
+      100% { transform: translateX(0) rotate(0deg); }
+    }
+    .firefly {
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fef08a;
+      box-shadow: 0 0 10px 3px rgba(253, 224, 71, 0.75), 0 0 22px 6px rgba(190, 242, 100, 0.35);
+      pointer-events: none;
+      z-index: 29;
+      animation: fireflyGlow 3.2s ease-in-out infinite, fireflyDrift 14s ease-in-out infinite alternate;
+    }
+    @keyframes fireflyGlow { 0%, 100% { opacity: 0.1; } 50% { opacity: 1; } }
+    @keyframes fireflyDrift { from { transform: translate(0, 0); } to { transform: translate(40px, -60px); } }
+
+    /* Scroll-reveal for cards */
+    .reveal-card { opacity: 0; transform: translateY(18px); transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+    .reveal-card.in { opacity: 1; transform: none; }
+
+    /* Spotlight carousel */
+    .spot-slide { position: absolute; inset: 0; display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateX(24px); transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); pointer-events: none; }
+    .spot-slide.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+    .spot-slide.leaving { opacity: 0; transform: translateX(-24px); }
+    .spot-dot { width: 6px; height: 6px; border-radius: 9999px; background: #d5bbf7; transition: all 0.3s ease; }
+    .spot-dot.active { width: 18px; background: linear-gradient(90deg, #9f62e2, #f472b6); }
+
+    /* Breathing glow on the star badge */
+    @keyframes starBreathe {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.0); }
+      50% { box-shadow: 0 0 18px 2px rgba(251, 191, 36, 0.45); }
+    }
+    .star-glow { animation: starBreathe 3.4s ease-in-out infinite; }
 
     /* Custom Checkbox Styling */
     .custom-checkbox {
@@ -184,10 +291,15 @@
     .avatar-svg { width: 100%; height: 100%; display: block; }
 
     @media (prefers-reduced-motion: no-preference) {
-      /* Cards float up as the page loads (stagger set by JS) */
-      .cloud-card { animation: cardIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
-      .modal .cloud-card { animation: none; }
       .modal.open .cloud-card { animation: popIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+      .blob { animation: blobDrift 30s ease-in-out infinite alternate; }
+      .blob-2 { animation-duration: 36s; }
+      .blob-3 { animation-duration: 42s; }
+      .blob-4 { animation-duration: 33s; }
+      @keyframes blobDrift {
+        from { transform: translate(0, 0) scale(1); }
+        to   { transform: translate(7vw, 6vh) scale(1.18); }
+      }
 
       @keyframes cardIn {
         from { opacity: 0; transform: translateY(18px); }
@@ -322,11 +434,21 @@
     </svg>
   </div>
 
-  <!-- FLOATING BUTTERFLIES DECOR -->
-  <div class="butterfly top-12 left-8 text-3xl text-purple-400">🦋</div>
-  <div class="butterfly butterfly-2 top-28 right-12 text-4xl text-pink-400">🦋</div>
-  <div class="butterfly top-1/2 left-4 text-2xl text-indigo-400">🦋</div>
-  <div class="butterfly butterfly-2 bottom-20 right-8 text-3xl text-purple-500">🦋</div>
+  <!-- DRIFTING COLOR BLOBS (behind the glass) -->
+  <div class="bg-blobs" id="bg-blobs" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="blob blob-4"></div>
+  </div>
+
+  <!-- CRITTERS: butterflies, a bee, a ladybug (fireflies appear in the evening) -->
+  <div class="critter butterfly text-3xl" style="top: 12%; left: 2%;" aria-hidden="true">🦋</div>
+  <div class="critter butterfly butterfly-2 text-4xl" style="top: 22%; right: 3%;" aria-hidden="true">🦋</div>
+  <div class="critter butterfly text-2xl" style="top: 58%; left: 1%;" aria-hidden="true">🦋</div>
+  <div class="critter bee text-2xl" style="top: 40%; right: 5%;" aria-hidden="true">🐝</div>
+  <div class="critter ladybug text-xl" style="bottom: 4%; left: 6%;" aria-hidden="true">🐞</div>
+  <div class="critter butterfly butterfly-2 text-3xl" style="bottom: 14%; right: 2%;" aria-hidden="true">🦋</div>
 
   <!-- MAIN CONTAINER -->
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -350,9 +472,8 @@
           </div>
           <p class="text-xs sm:text-sm text-lavender-700 font-medium mt-0.5">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20.9</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.22</span>
           </p>
-          <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1 max-w-md leading-snug"></p>
         </div>
       </div>
 
@@ -377,7 +498,7 @@
         </div>
 
         <!-- Star Points -->
-        <div class="bg-amber-50 border border-amber-200 rounded-2xl px-3 py-1.5 flex items-center gap-2 shadow-sm">
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl px-3 py-1.5 flex items-center gap-2 shadow-sm star-glow">
           <div class="text-2xl text-amber-400">⭐</div>
           <div>
             <p class="text-xs font-bold text-amber-600 uppercase tracking-wider">Star Points</p>
@@ -411,6 +532,22 @@
         </div>
       </div>
     </header>
+
+    <!-- SPOTLIGHT CAROUSEL: quote, what's next, due soon, events, weather -->
+    <div class="cloud-card mb-5 px-3 py-2" id="spotlight">
+      <div class="flex items-center gap-2">
+        <button onclick="spotlightStep(-1)" class="w-9 h-9 rounded-xl text-lavender-500 hover:bg-lavender-100 transition shrink-0" aria-label="Previous">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <div class="flex-1 relative min-h-[44px] overflow-hidden" id="spotlight-track">
+          <!-- Dynamically populated -->
+        </div>
+        <button onclick="spotlightStep(1)" class="w-9 h-9 rounded-xl text-lavender-500 hover:bg-lavender-100 transition shrink-0" aria-label="Next">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+      <div class="flex justify-center gap-1.5 mt-1" id="spotlight-dots"></div>
+    </div>
 
     <!-- DASHBOARD GRID LAYOUT -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -560,6 +697,10 @@
             <input type="file" id="restore-input" accept=".txt,.json,text/plain,application/json" class="hidden" onchange="doRestore(event)">
           </div>
           <p id="backup-date-label" class="text-[11px] text-slate-400 font-semibold mt-2 text-center">No backup yet</p>
+          <div class="mt-3 pt-3 border-t border-lavender-100 flex items-center justify-between gap-2">
+            <p class="text-[11px] text-slate-500 font-medium">Glass &amp; critters feeling slow? Switch them off.</p>
+            <button onclick="toggleLite()" id="lite-btn" class="text-xs font-bold text-lavender-700 bg-white border border-lavender-200 px-3 py-2 rounded-xl hover:bg-lavender-50 transition shrink-0">✨ Effects: On</button>
+          </div>
         </div>
 
       </div>
@@ -1123,7 +1264,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.08.20.9';
+    var APP_VERSION = 'v2026.08.22';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
@@ -1148,6 +1289,7 @@
         events: [],   // { id, title, date (YYYY-MM-DD), time }
         googleCal: { id: 'cartierafamily@gmail.com', mode: 'AGENDA' }, // the family calendar (Antonella & Carmine)
         gcalFeed: null, // { url, lastSync, events: [{id, title, date, time, source:'google'}] } — combined mode
+        lite: false,    // effects off (no glass blur / critters) for slower tablets
         activities: [
           { id: 'act-bjj',     name: 'Brazilian Jiu-Jitsu (BJJ)', emoji: '🥋', color: '#a855f7', days: [2, 4], time: '4:30 PM - 5:30 PM' },
           { id: 'act-theater', name: 'Theater Club',              emoji: '🎭', color: '#ec4899', days: [],     time: '' },
@@ -1976,6 +2118,7 @@
       renderDayDetails();
       renderBrief();
       renderWeekSnapshot();
+      renderSpotlight();
     }
 
     // ---------- Quote of the day ----------
@@ -2012,10 +2155,10 @@
       { t: 'Learning is a treasure that will follow its owner everywhere.', by: 'Chinese proverb' }
     ];
 
+    var dailyQuote = null;
     function renderQuote() {
       var idx = Math.floor(parseDateStr(todayStr()).getTime() / 86400000) % QUOTES.length;
-      var q = QUOTES[idx];
-      document.getElementById('daily-quote').textContent = '“' + q.t + '” — ' + q.by;
+      dailyQuote = QUOTES[idx]; // shown in the Spotlight carousel
     }
 
     // ---------- Birthday countdown ----------
@@ -2776,6 +2919,235 @@
       }
     }
 
+    // ---------- Spotlight carousel ----------
+    var spotSlides = [];
+    var spotIndex = 0;
+    var spotTimer = null;
+    var spotPausedUntil = 0;
+
+    function nextActivityOccurrence() {
+      // The soonest upcoming activity within the next 7 days (today included if its time hasn't obviously passed)
+      var now = new Date();
+      var best = null;
+      state.activities.forEach(function (a) {
+        if (!a.days.length) return;
+        for (var i = 0; i < 7; i++) {
+          var d = new Date(now); d.setDate(now.getDate() + i);
+          if (a.days.indexOf(d.getDay()) === -1) continue;
+          if (i === 0 && a.time) {
+            var m = a.time.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+            if (m) {
+              var h = Number(m[1]) % 12 + (m[3].toLowerCase() === 'pm' ? 12 : 0);
+              var endGuess = new Date(now); endGuess.setHours(h + 1, Number(m[2] || 0), 0, 0);
+              if (endGuess < now) continue; // already happened today
+            }
+          }
+          if (!best || i < best.days) best = { days: i, act: a, date: d };
+          break;
+        }
+      });
+      return best;
+    }
+
+    function buildSpotlightSlides() {
+      var slides = [];
+      var todayDs = todayStr();
+
+      if (dailyQuote) slides.push({ icon: '✦', label: 'Quote of the day', text: '“' + dailyQuote.t + '” — ' + dailyQuote.by });
+
+      var nx = nextActivityOccurrence();
+      if (nx) {
+        var when = nx.days === 0 ? 'Today' : (nx.days === 1 ? 'Tomorrow' : nx.date.toLocaleDateString('en-US', { weekday: 'long' }));
+        slides.push({ icon: nx.act.emoji, label: 'Up next', text: nx.act.name + ' • ' + when + (nx.act.time ? ' ' + nx.act.time : '') });
+      }
+
+      var due = state.homework.filter(function (hw) { return !hw.done && hw.due; })
+        .sort(function (a, b) { return a.due.localeCompare(b.due); })[0];
+      if (due) {
+        var overdue = due.due < todayDs;
+        slides.push({ icon: due.type === 'test' ? '🧠' : '📝', label: overdue ? 'Past due!' : 'Due soon',
+          text: due.title + ' • ' + (overdue ? 'was due ' : '') + friendlyDue(due.due), cls: overdue ? 'text-red-500' : '' });
+      }
+
+      var upcomingEv = null;
+      for (var i = 0; i < 14 && !upcomingEv; i++) {
+        var d = new Date(); d.setDate(d.getDate() + i);
+        var evs = eventsOn(todayStr(d));
+        if (evs.length) upcomingEv = { ev: evs[0], days: i, date: d };
+      }
+      if (upcomingEv) {
+        var evWhen = upcomingEv.days === 0 ? 'Today' : (upcomingEv.days === 1 ? 'Tomorrow' : upcomingEv.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+        slides.push({ icon: evIcon(upcomingEv.ev).trim(), label: 'On the calendar', text: upcomingEv.ev.title + ' • ' + evWhen + (upcomingEv.ev.time ? ' ' + upcomingEv.ev.time : '') });
+      }
+
+      var w = state.weatherCache;
+      if (w && w.daily && w.daily[1]) {
+        var t = wmoInfo(w.daily[1].code);
+        slides.push({ icon: t.icon, label: 'Tomorrow', text: t.desc + ', high ' + w.daily[1].hi + '° / low ' + w.daily[1].lo + '°' });
+      }
+
+      slides.push({ icon: '⭐', label: 'Star count', text: state.stars + ' stars earned — keep going!' });
+      return slides;
+    }
+
+    function renderSpotlight() {
+      var track = document.getElementById('spotlight-track');
+      var dots = document.getElementById('spotlight-dots');
+      if (!track) return;
+      spotSlides = buildSpotlightSlides();
+      if (spotIndex >= spotSlides.length) spotIndex = 0;
+      track.innerHTML = '';
+      dots.innerHTML = '';
+      spotSlides.forEach(function (s, i) {
+        var el = document.createElement('div');
+        el.className = 'spot-slide' + (i === spotIndex ? ' active' : '');
+        var ic = document.createElement('span');
+        ic.className = 'text-2xl shrink-0 w-9 text-center';
+        ic.textContent = s.icon;
+        var txt = document.createElement('div');
+        txt.className = 'min-w-0';
+        var lb = document.createElement('p');
+        lb.className = 'text-[10px] font-bold uppercase tracking-wider text-lavender-500';
+        lb.textContent = s.label;
+        var body = document.createElement('p');
+        body.className = 'text-sm font-bold text-slate-700 truncate ' + (s.cls || '');
+        body.textContent = s.text;
+        txt.appendChild(lb); txt.appendChild(body);
+        el.appendChild(ic); el.appendChild(txt);
+        track.appendChild(el);
+
+        var dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'spot-dot' + (i === spotIndex ? ' active' : '');
+        dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+        dot.addEventListener('click', function () { spotGo(i, true); });
+        dots.appendChild(dot);
+      });
+    }
+
+    function spotGo(i, manual) {
+      if (!spotSlides.length) return;
+      var from = spotIndex;
+      spotIndex = (i + spotSlides.length) % spotSlides.length;
+      var slides = document.querySelectorAll('#spotlight-track .spot-slide');
+      var dotEls = document.querySelectorAll('#spotlight-dots .spot-dot');
+      slides.forEach(function (el, k) {
+        el.classList.remove('leaving');
+        if (k === from && from !== spotIndex) el.classList.add('leaving');
+        el.classList.toggle('active', k === spotIndex);
+      });
+      dotEls.forEach(function (el, k) { el.classList.toggle('active', k === spotIndex); });
+      if (manual) spotPausedUntil = Date.now() + 20000; // pause auto-rotate after a tap/swipe
+    }
+
+    function spotlightStep(delta) { spotGo(spotIndex + delta, true); }
+
+    function initSpotlight() {
+      renderSpotlight();
+      spotTimer = setInterval(function () {
+        if (Date.now() < spotPausedUntil || document.hidden) return;
+        spotGo(spotIndex + 1, false);
+      }, 7000);
+      // Swipe
+      var track = document.getElementById('spotlight-track');
+      var startX = null;
+      track.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; }, { passive: true });
+      track.addEventListener('touchend', function (e) {
+        if (startX === null) return;
+        var dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 40) spotlightStep(dx < 0 ? 1 : -1);
+        startX = null;
+      }, { passive: true });
+    }
+
+    // ---------- Effects: glass sheen, scroll reveal, parallax, critters, fireflies, lite mode ----------
+    var FLYBY_CRITTERS = ['🦋', '🦋', '🐝', '🦋', '🐞', '🦋'];
+
+    function applyLite() {
+      document.body.classList.toggle('lite', !!state.lite);
+      var btn = document.getElementById('lite-btn');
+      if (btn) btn.textContent = state.lite ? '✨ Effects: Off' : '✨ Effects: On';
+    }
+
+    function toggleLite() {
+      state.lite = !state.lite;
+      applyLite();
+      scheduleSave();
+      showToast(state.lite ? 'Effects off — plain and speedy.' : 'Effects on — shiny! ✨');
+    }
+
+    function initEffects() {
+      applyLite();
+
+      // Tap a card → light sheen sweeps across it
+      document.addEventListener('pointerdown', function (e) {
+        var card = e.target.closest ? e.target.closest('.cloud-card') : null;
+        if (!card || card.closest('.modal') || !motionOK() || state.lite) return;
+        card.classList.remove('sheen');
+        void card.offsetWidth; // restart the animation
+        card.classList.add('sheen');
+      }, { passive: true });
+      document.addEventListener('animationend', function (e) {
+        if (e.animationName === 'sheenSweep' && e.target.classList) e.target.classList.remove('sheen');
+      });
+
+      // Cards rise in as they scroll into view (staggered on first paint)
+      var cards = Array.prototype.filter.call(document.querySelectorAll('.cloud-card'), function (c) { return !c.closest('.modal'); });
+      if (!motionOK() || !('IntersectionObserver' in window)) {
+        cards.forEach(function (c) { c.classList.add('in'); });
+      } else {
+        var delay = 0;
+        cards.forEach(function (c) { c.classList.add('reveal-card'); });
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (!en.isIntersecting) return;
+            var c = en.target;
+            c.style.transitionDelay = delay + 'ms';
+            delay = Math.min(delay + 70, 420);
+            c.classList.add('in');
+            io.unobserve(c);
+            setTimeout(function () { delay = Math.max(0, delay - 70); c.style.transitionDelay = ''; }, 700);
+          });
+        }, { rootMargin: '0px 0px -8% 0px' });
+        cards.forEach(function (c) { io.observe(c); });
+      }
+
+      // Background blobs drift a little with scrolling (parallax)
+      var blobs = document.getElementById('bg-blobs');
+      if (motionOK() && blobs) {
+        var ticking = false;
+        window.addEventListener('scroll', function () {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(function () {
+            blobs.style.transform = 'translateY(' + (window.scrollY * -0.06) + 'px)';
+            ticking = false;
+          });
+        }, { passive: true });
+      }
+
+      // Fireflies come out in the evening
+      updateFireflies();
+      setInterval(updateFireflies, 10 * 60 * 1000);
+    }
+
+    function updateFireflies() {
+      var hour = new Date().getHours();
+      var night = hour >= 19 || hour < 6;
+      var existing = document.querySelectorAll('.firefly');
+      if (!night || !motionOK()) { existing.forEach(function (f) { f.remove(); }); return; }
+      if (existing.length) return;
+      for (var i = 0; i < 8; i++) {
+        var f = document.createElement('div');
+        f.className = 'firefly';
+        f.style.left = (5 + Math.random() * 90) + 'vw';
+        f.style.top = (10 + Math.random() * 80) + 'vh';
+        f.style.animationDelay = (Math.random() * 3) + 's, ' + (Math.random() * 6) + 's';
+        f.style.animationDuration = (2.4 + Math.random() * 2) + 's, ' + (10 + Math.random() * 10) + 's';
+        document.body.appendChild(f);
+      }
+    }
+
     // ---------- Modals & toast ----------
     function openModal(id) {
       document.getElementById(id).classList.add('open');
@@ -2827,13 +3199,16 @@
     }
 
     function launchFlyby() {
-      if (!motionOK()) return;
+      if (!motionOK() || state.lite) return;
       var fly = document.createElement('div');
       fly.className = 'fly-across';
       fly.style.top = (12 + Math.random() * 55) + 'vh';
+      var critter = FLYBY_CRITTERS[Math.floor(Math.random() * FLYBY_CRITTERS.length)];
+      if (critter === '🐝') fly.style.animationDuration = '9s';   // bees are quick
+      if (critter === '🐞') fly.style.animationDuration = '26s';  // ladybugs take their time
       var inner = document.createElement('span');
       inner.className = 'text-2xl';
-      inner.textContent = '🦋';
+      inner.textContent = critter;
       fly.appendChild(inner);
       document.body.appendChild(fly);
       setTimeout(function () { fly.remove(); }, 17000);
@@ -3239,15 +3614,11 @@
       fetchGoogleFeed(false);
       setInterval(function () { fetchGoogleFeed(false); }, 30 * 60 * 1000);
 
-      // Staggered entrance for the cards (skip modal cards)
-      var delay = 0;
-      document.querySelectorAll('.cloud-card').forEach(function (card) {
-        if (card.closest('.modal')) return;
-        card.style.animationDelay = delay + 'ms';
-        delay += 70;
-      });
+      // Glass sheen, scroll reveal, parallax blobs, fireflies, lite mode
+      initEffects();
+      initSpotlight();
 
-      // A butterfly flutters across now and then
+      // A critter flutters across now and then
       setTimeout(launchFlyby, 4000);
       setInterval(launchFlyby, 42000);
 
