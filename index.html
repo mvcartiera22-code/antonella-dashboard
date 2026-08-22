@@ -521,7 +521,7 @@
           </div>
           <p class="text-xs sm:text-sm text-lavender-700 font-medium mt-0.5">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.22.3</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.22.4</span>
           </p>
           <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1 max-w-md leading-snug"></p>
         </div>
@@ -595,9 +595,10 @@
             <button onclick="navCalendar(-1)" class="w-11 h-11 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Back">
               <i class="fa-solid fa-chevron-left"></i>
             </button>
-            <h3 class="font-bold text-lavender-900 text-base flex items-center gap-2">
+            <button type="button" onclick="openBigCalendar()" class="font-bold text-lavender-900 text-base flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-lavender-50 transition" title="Open the big calendar">
               <i class="fa-regular fa-calendar-days text-lavender-500"></i> <span id="calendar-month-label">...</span>
-            </h3>
+              <i class="fa-solid fa-up-right-and-down-left-from-center text-[10px] text-lavender-400"></i>
+            </button>
             <button onclick="navCalendar(1)" class="w-11 h-11 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Forward">
               <i class="fa-solid fa-chevron-right"></i>
             </button>
@@ -685,6 +686,10 @@
                 <i class="fa-solid fa-rotate mr-1"></i> Sync
               </button>
             </div>
+            <label class="flex items-center gap-2 mt-2 px-1 cursor-pointer">
+              <input type="checkbox" id="hide-carmine" class="custom-checkbox" onchange="toggleHideCarmine(this.checked)">
+              <span class="text-xs font-medium text-slate-600">Hide Carmine's events (birthdays always show)</span>
+            </label>
             <div class="flex items-center justify-between mt-2">
               <a href="https://calendar.google.com" target="_blank" class="text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl hover:bg-emerald-200 transition">
                 Open Google Calendar ↗
@@ -1143,6 +1148,33 @@
     </div>
   </div>
 
+  <!-- BIG CALENDAR MODAL -->
+  <div id="bigcal-modal" class="modal">
+    <div class="cloud-card p-4 sm:p-6 w-full max-w-5xl max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between mb-3 gap-2">
+        <button onclick="navBigCalendar(-1)" class="w-11 h-11 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Previous month">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <h3 id="bigcal-title" class="text-xl font-bold text-lavender-900 flex items-center gap-2">
+          <i class="fa-regular fa-calendar-days text-lavender-500"></i> <span id="bigcal-label">...</span>
+        </h3>
+        <div class="flex items-center gap-1">
+          <button onclick="navBigCalendar(1)" class="w-11 h-11 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Next month">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+          <button onclick="closeModal('bigcal-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-7 text-center text-[11px] font-bold text-lavender-400 mb-1.5">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
+      <div id="bigcal-grid" class="grid grid-cols-7 gap-1.5 overflow-y-auto flex-1 pr-1">
+        <!-- Dynamically populated -->
+      </div>
+      <p class="text-[11px] text-slate-400 font-medium text-center mt-2">Tap a day to open it in the day card.</p>
+    </div>
+  </div>
+
   <!-- LINK GOOGLE CALENDAR MODAL -->
   <div id="gcal-modal" class="modal">
     <div class="cloud-card p-6 max-w-md w-full">
@@ -1304,7 +1336,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.08.22.3';
+    var APP_VERSION = 'v2026.08.22.4';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
@@ -1331,6 +1363,7 @@
         gcalFeed: null, // { url, lastSync, events: [{id, title, date, time, source:'google'}] } — combined mode
         lite: false,    // effects off (no glass blur / critters) for slower tablets
         theme: 'lavender', // color scheme: lavender | ocean | sunset | mint | berry
+        hideCarmine: true, // hide Google events that are only about Carmine (birthdays still show)
         activities: [
           { id: 'act-bjj',     name: 'Brazilian Jiu-Jitsu (BJJ)', emoji: '🥋', color: '#a855f7', days: [2, 4], time: '4:30 PM - 5:30 PM' },
           { id: 'act-theater', name: 'Theater Club',              emoji: '🎭', color: '#ec4899', days: [],     time: '' },
@@ -1776,10 +1809,27 @@
 
     var GOOGLE_EVENT_COLOR = '#0ea5e9';
 
+    // An event that's only about Carmine (names him, not Antonella, and isn't a birthday)
+    function isCarmineOnly(title) {
+      var t = String(title || '');
+      return /carmine/i.test(t) && !/antonella/i.test(t) && !/b-?day|birthday|cumplea/i.test(t);
+    }
+
     function googleEventsOn(ds) {
       var f = state.gcalFeed;
       if (!f || !Array.isArray(f.events)) return [];
-      return f.events.filter(function (ev) { return ev.date === ds; });
+      return f.events.filter(function (ev) {
+        if (ev.date !== ds) return false;
+        if (state.hideCarmine !== false && isCarmineOnly(ev.title)) return false;
+        return true;
+      });
+    }
+
+    function toggleHideCarmine(on) {
+      state.hideCarmine = !!on;
+      renderCalendar();
+      scheduleSave();
+      showToast(on ? "Carmine's events hidden (birthdays still show)." : "Showing everyone's events.");
     }
 
     // Dashboard events + Google events for a day (Google ones carry source:'google' and are read-only here)
@@ -1991,6 +2041,99 @@
         row.appendChild(dayCol);
         row.appendChild(info);
         container.appendChild(row);
+      }
+    }
+
+    // ---------- Big calendar (tap the month title) ----------
+    var bigYear, bigMonth;
+
+    function dayItemsFor(ds, date) {
+      var items = [];
+      if (date.getMonth() === 11 && date.getDate() === 18) items.push({ text: '🎂 Birthday!', cls: 'text-pink-600 font-bold' });
+      var hol = getHoliday(ds);
+      if (hol) items.push({ text: hol.emoji + ' ' + hol.name, cls: 'text-lavender-700 font-bold' });
+      state.activities.forEach(function (a) {
+        if (a.days.indexOf(date.getDay()) !== -1)
+          items.push({ text: a.emoji + ' ' + shortActivityLabel(a) + (a.time ? ' ' + a.time.split(/\s*[-–—]\s*/)[0] : ''), color: a.color });
+      });
+      eventsOn(ds).forEach(function (ev) {
+        items.push({ text: evIcon(ev) + ev.title + (ev.time ? ' ' + ev.time : ''), color: ev.source === 'google' ? GOOGLE_EVENT_COLOR : EVENT_COLOR });
+      });
+      state.homework.forEach(function (hw) {
+        if (hw.due === ds && !hw.done) items.push({ text: (hw.type === 'test' ? '🧠 ' : '📝 ') + hw.title, cls: hw.due < todayStr() ? 'text-red-500 font-bold' : 'text-slate-700 font-bold' });
+      });
+      return items;
+    }
+
+    function openBigCalendar() {
+      if (calView === 'month') { bigYear = calYear; bigMonth = calMonth; }
+      else { bigYear = calWeekAnchor.getFullYear(); bigMonth = calWeekAnchor.getMonth(); }
+      renderBigCalendar();
+      openModal('bigcal-modal');
+    }
+
+    function navBigCalendar(delta) {
+      bigMonth += delta;
+      if (bigMonth < 0) { bigMonth = 11; bigYear--; }
+      if (bigMonth > 11) { bigMonth = 0; bigYear++; }
+      renderBigCalendar();
+    }
+
+    function renderBigCalendar() {
+      var grid = document.getElementById('bigcal-grid');
+      grid.innerHTML = '';
+      var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      document.getElementById('bigcal-label').textContent = monthNames[bigMonth] + ' ' + bigYear;
+
+      var firstDay = new Date(bigYear, bigMonth, 1).getDay();
+      var daysInMonth = new Date(bigYear, bigMonth + 1, 0).getDate();
+      var todayDs = todayStr();
+
+      for (var i = 0; i < firstDay; i++) {
+        var blank = document.createElement('div');
+        blank.className = 'min-h-[88px] sm:min-h-[104px] rounded-xl bg-lavender-50/40';
+        grid.appendChild(blank);
+      }
+
+      for (var day = 1; day <= daysInMonth; day++) {
+        var date = new Date(bigYear, bigMonth, day);
+        var ds = todayStr(date);
+        var isToday = ds === todayDs;
+        var isSelected = ds === selectedCalDay;
+
+        var cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'min-h-[88px] sm:min-h-[104px] text-left rounded-xl border-2 p-1.5 transition overflow-hidden ' +
+          (isToday ? 'border-pink-300 bg-gradient-to-b from-pink-50 to-white' :
+           (isSelected ? 'border-lavender-400 bg-lavender-50' : 'border-lavender-100 bg-white hover:border-lavender-300'));
+        (function (d2) {
+          cell.addEventListener('click', function () {
+            calView = 'month'; calYear = bigYear; calMonth = bigMonth;
+            closeModal('bigcal-modal');
+            selectCalDay(d2);
+          });
+        })(ds);
+
+        var num = document.createElement('p');
+        num.className = 'text-xs font-bold mb-0.5 ' + (isToday ? 'text-pink-500' : 'text-lavender-900');
+        num.textContent = day + (isToday ? ' • today' : '');
+        cell.appendChild(num);
+
+        var items = dayItemsFor(ds, date);
+        items.slice(0, 4).forEach(function (it) {
+          var p = document.createElement('p');
+          p.className = 'text-[10px] leading-tight truncate mb-0.5 font-semibold ' + (it.cls || 'text-slate-600');
+          if (it.color) p.style.color = it.color;
+          p.textContent = it.text;
+          cell.appendChild(p);
+        });
+        if (items.length > 4) {
+          var more = document.createElement('p');
+          more.className = 'text-[10px] text-slate-400';
+          more.textContent = '+' + (items.length - 4) + ' more';
+          cell.appendChild(more);
+        }
+        grid.appendChild(cell);
       }
     }
 
@@ -2784,6 +2927,7 @@
         feedBox.classList.remove('hidden');
         var info = document.getElementById('gcal-feed-info');
         var fmtOpts = { hour: 'numeric', minute: '2-digit' };
+        document.getElementById('hide-carmine').checked = state.hideCarmine !== false;
         if (gcalFeedBusy) info.textContent = 'Syncing…';
         else if (gcalFeedError) info.textContent = gcalFeedError + (feed.lastSync ? ' — showing events from ' + new Date(feed.lastSync).toLocaleTimeString([], fmtOpts) : '');
         else if (feed.lastSync) info.textContent = (feed.events ? feed.events.length : 0) + ' events • updated ' + new Date(feed.lastSync).toLocaleTimeString([], fmtOpts);
