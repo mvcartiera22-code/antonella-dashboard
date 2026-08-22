@@ -19,17 +19,28 @@
             sans: ['Quicksand', 'sans-serif'],
           },
           colors: {
+            // Primary + accent come from CSS variables so color schemes can swap them live
             lavender: {
-              50: '#fbf8ff',
-              100: '#f4edff',
-              200: '#e9daff',
-              300: '#d5bbf7',
-              400: '#ba90ee',
-              500: '#9f62e2',
-              600: '#8843ce',
-              700: '#7131b0',
-              800: '#5e2a90',
-              900: '#4e2376',
+              50: 'rgb(var(--p-50) / <alpha-value>)',
+              100: 'rgb(var(--p-100) / <alpha-value>)',
+              200: 'rgb(var(--p-200) / <alpha-value>)',
+              300: 'rgb(var(--p-300) / <alpha-value>)',
+              400: 'rgb(var(--p-400) / <alpha-value>)',
+              500: 'rgb(var(--p-500) / <alpha-value>)',
+              600: 'rgb(var(--p-600) / <alpha-value>)',
+              700: 'rgb(var(--p-700) / <alpha-value>)',
+              800: 'rgb(var(--p-800) / <alpha-value>)',
+              900: 'rgb(var(--p-900) / <alpha-value>)',
+            },
+            pink: {
+              50: 'rgb(var(--a-50) / <alpha-value>)',
+              100: 'rgb(var(--a-100) / <alpha-value>)',
+              200: 'rgb(var(--a-200) / <alpha-value>)',
+              300: 'rgb(var(--a-300) / <alpha-value>)',
+              400: 'rgb(var(--a-400) / <alpha-value>)',
+              500: 'rgb(var(--a-500) / <alpha-value>)',
+              600: 'rgb(var(--a-600) / <alpha-value>)',
+              700: 'rgb(var(--a-700) / <alpha-value>)',
             },
             cloud: {
               white: 'rgba(255, 255, 255, 0.92)',
@@ -46,9 +57,47 @@
   </script>
 
   <style>
+    /* ---------- Color schemes (primary --p-*, accent --a-*, as RGB triplets) ---------- */
+    :root, :root[data-theme="lavender"] {
+      --p-50: 251 248 255; --p-100: 244 237 255; --p-200: 233 218 255; --p-300: 213 187 247; --p-400: 186 144 238;
+      --p-500: 159 98 226; --p-600: 136 67 206; --p-700: 113 49 176; --p-800: 94 42 144; --p-900: 78 35 118;
+      --a-50: 253 242 248; --a-100: 252 231 243; --a-200: 251 207 232; --a-300: 249 168 212;
+      --a-400: 244 114 182; --a-500: 236 72 153; --a-600: 219 39 119; --a-700: 190 24 93;
+      --blob-3: 167 243 208; --blob-4: 186 230 253;
+    }
+    :root[data-theme="ocean"] {
+      --p-50: 240 249 255; --p-100: 224 242 254; --p-200: 186 230 253; --p-300: 125 211 252; --p-400: 56 189 248;
+      --p-500: 14 165 233; --p-600: 2 132 199; --p-700: 3 105 161; --p-800: 7 89 133; --p-900: 12 74 110;
+      --a-50: 255 247 237; --a-100: 255 237 213; --a-200: 254 215 170; --a-300: 253 186 116;
+      --a-400: 251 146 60; --a-500: 249 115 22; --a-600: 234 88 12; --a-700: 194 65 12;
+      --blob-3: 153 246 228; --blob-4: 199 210 254;
+    }
+    :root[data-theme="sunset"] {
+      --p-50: 255 247 237; --p-100: 255 237 213; --p-200: 254 215 170; --p-300: 253 186 116; --p-400: 251 146 60;
+      --p-500: 249 115 22; --p-600: 234 88 12; --p-700: 194 65 12; --p-800: 154 52 18; --p-900: 124 45 18;
+      --a-50: 255 241 242; --a-100: 255 228 230; --a-200: 254 205 211; --a-300: 253 164 175;
+      --a-400: 251 113 133; --a-500: 244 63 94; --a-600: 225 29 72; --a-700: 190 18 60;
+      --blob-3: 254 240 138; --blob-4: 251 207 232;
+    }
+    :root[data-theme="mint"] {
+      --p-50: 236 253 245; --p-100: 209 250 229; --p-200: 167 243 208; --p-300: 110 231 183; --p-400: 52 211 153;
+      --p-500: 16 185 129; --p-600: 5 150 105; --p-700: 4 120 87; --p-800: 6 95 70; --p-900: 6 78 59;
+      --a-50: 245 243 255; --a-100: 237 233 254; --a-200: 221 214 254; --a-300: 196 181 253;
+      --a-400: 167 139 250; --a-500: 139 92 246; --a-600: 124 58 237; --a-700: 109 40 217;
+      --blob-3: 254 240 138; --blob-4: 186 230 253;
+    }
+    :root[data-theme="berry"] {
+      --p-50: 253 244 255; --p-100: 250 232 255; --p-200: 245 208 254; --p-300: 240 171 252; --p-400: 232 121 249;
+      --p-500: 217 70 239; --p-600: 192 38 211; --p-700: 162 28 175; --p-800: 134 25 143; --p-900: 112 26 117;
+      --a-50: 240 253 250; --a-100: 204 251 241; --a-200: 153 246 228; --a-300: 94 234 212;
+      --a-400: 45 212 191; --a-500: 20 184 166; --a-600: 13 148 136; --a-700: 15 118 110;
+      --blob-3: 254 205 211; --blob-4: 153 246 228;
+    }
+
     body {
       font-family: 'Quicksand', sans-serif;
-      background: linear-gradient(135deg, #e9daff 0%, #f4edff 50%, #d5bbf7 100%);
+      background: linear-gradient(135deg, rgb(var(--p-200)) 0%, rgb(var(--p-100)) 50%, rgb(var(--p-300)) 100%);
+      transition: background 0.6s ease;
       min-height: 100vh;
       overflow-x: hidden;
     }
@@ -61,10 +110,10 @@
       border: 1px solid rgba(255, 255, 255, 0.85);
       border-radius: 28px;
       box-shadow:
-        0 12px 32px -10px rgba(136, 67, 206, 0.22),
-        0 2px 6px rgba(136, 67, 206, 0.06),
+        0 12px 32px -10px rgb(var(--p-600) / 0.22),
+        0 2px 6px rgb(var(--p-600) / 0.06),
         inset 0 1px 0 rgba(255, 255, 255, 0.95),
-        inset 0 -1px 0 rgba(159, 98, 226, 0.10);
+        inset 0 -1px 0 rgb(var(--p-500) / 0.10);
       position: relative;
       overflow: hidden;
     }
@@ -115,10 +164,10 @@
       opacity: 0.6;
       will-change: transform;
     }
-    .blob-1 { width: 48vw; height: 48vw; background: #c4a4f5; top: -12vw; left: -12vw; }
-    .blob-2 { width: 42vw; height: 42vw; background: #fbcfe8; top: 28vh; right: -14vw; }
-    .blob-3 { width: 38vw; height: 38vw; background: #a7f3d0; bottom: -14vw; left: 18vw; }
-    .blob-4 { width: 30vw; height: 30vw; background: #bae6fd; top: 58vh; left: -10vw; }
+    .blob-1 { width: 48vw; height: 48vw; background: rgb(var(--p-300)); top: -12vw; left: -12vw; }
+    .blob-2 { width: 42vw; height: 42vw; background: rgb(var(--a-200)); top: 28vh; right: -14vw; }
+    .blob-3 { width: 38vw; height: 38vw; background: rgb(var(--blob-3)); bottom: -14vw; left: 18vw; }
+    .blob-4 { width: 30vw; height: 30vw; background: rgb(var(--blob-4)); top: 58vh; left: -10vw; }
 
     /* Lite mode: flat cards, no blur, no critters (for slower tablets) */
     body.lite .cloud-card { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(255,255,255,0.92); }
@@ -210,7 +259,7 @@
       height: 28px;
       min-width: 28px;
       border-radius: 50%;
-      border: 2px solid #ba90ee;
+      border: 2px solid rgb(var(--p-400));
       appearance: none;
       outline: none;
       cursor: pointer;
@@ -221,8 +270,8 @@
     }
 
     .custom-checkbox:checked {
-      background-color: #9f62e2;
-      border-color: #9f62e2;
+      background-color: rgb(var(--p-500));
+      border-color: rgb(var(--p-500));
     }
 
     .custom-checkbox:checked::after {
@@ -256,13 +305,13 @@
       bottom: 84px;
       left: 50%;
       transform: translateX(-50%) translateY(20px);
-      background: #4e2376;
+      background: rgb(var(--p-900));
       color: white;
       padding: 12px 20px;
       border-radius: 16px;
       font-size: 14px;
       font-weight: 600;
-      box-shadow: 0 10px 25px rgba(78, 35, 118, 0.4);
+      box-shadow: 0 10px 25px rgb(var(--p-900) / 0.4);
       opacity: 0;
       pointer-events: none;
       transition: all 0.3s ease;
@@ -401,15 +450,15 @@
       width: 8px;
     }
     ::-webkit-scrollbar-track {
-      background: #f4edff;
+      background: rgb(var(--p-100));
       border-radius: 10px;
     }
     ::-webkit-scrollbar-thumb {
-      background: #ba90ee;
+      background: rgb(var(--p-400));
       border-radius: 10px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: #9f62e2;
+      background: rgb(var(--p-500));
     }
   </style>
 </head>
@@ -472,8 +521,9 @@
           </div>
           <p class="text-xs sm:text-sm text-lavender-700 font-medium mt-0.5">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.22</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.22.3</span>
           </p>
+          <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1 max-w-md leading-snug"></p>
         </div>
       </div>
 
@@ -532,22 +582,6 @@
         </div>
       </div>
     </header>
-
-    <!-- SPOTLIGHT CAROUSEL: quote, what's next, due soon, events, weather -->
-    <div class="cloud-card mb-5 px-3 py-2" id="spotlight">
-      <div class="flex items-center gap-2">
-        <button onclick="spotlightStep(-1)" class="w-9 h-9 rounded-xl text-lavender-500 hover:bg-lavender-100 transition shrink-0" aria-label="Previous">
-          <i class="fa-solid fa-chevron-left"></i>
-        </button>
-        <div class="flex-1 relative min-h-[44px] overflow-hidden" id="spotlight-track">
-          <!-- Dynamically populated -->
-        </div>
-        <button onclick="spotlightStep(1)" class="w-9 h-9 rounded-xl text-lavender-500 hover:bg-lavender-100 transition shrink-0" aria-label="Next">
-          <i class="fa-solid fa-chevron-right"></i>
-        </button>
-      </div>
-      <div class="flex justify-center gap-1.5 mt-1" id="spotlight-dots"></div>
-    </div>
 
     <!-- DASHBOARD GRID LAYOUT -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -980,6 +1014,12 @@
         <!-- Dynamically populated -->
       </div>
 
+      <!-- Color scheme -->
+      <p class="text-xs font-bold text-slate-700 mb-2"><i class="fa-solid fa-palette text-pink-400 mr-1"></i> Color scheme</p>
+      <div class="grid grid-cols-5 gap-2 mb-4" id="theme-options">
+        <!-- Dynamically populated -->
+      </div>
+
       <button onclick="closeModal('avatar-modal')" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow hover:opacity-90 transition">
         Save My Avatar!
       </button>
@@ -1264,7 +1304,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.08.22';
+    var APP_VERSION = 'v2026.08.22.3';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
@@ -1290,6 +1330,7 @@
         googleCal: { id: 'cartierafamily@gmail.com', mode: 'AGENDA' }, // the family calendar (Antonella & Carmine)
         gcalFeed: null, // { url, lastSync, events: [{id, title, date, time, source:'google'}] } — combined mode
         lite: false,    // effects off (no glass blur / critters) for slower tablets
+        theme: 'lavender', // color scheme: lavender | ocean | sunset | mint | berry
         activities: [
           { id: 'act-bjj',     name: 'Brazilian Jiu-Jitsu (BJJ)', emoji: '🥋', color: '#a855f7', days: [2, 4], time: '4:30 PM - 5:30 PM' },
           { id: 'act-theater', name: 'Theater Club',              emoji: '🎭', color: '#ec4899', days: [],     time: '' },
@@ -2118,7 +2159,6 @@
       renderDayDetails();
       renderBrief();
       renderWeekSnapshot();
-      renderSpotlight();
     }
 
     // ---------- Quote of the day ----------
@@ -2158,7 +2198,8 @@
     var dailyQuote = null;
     function renderQuote() {
       var idx = Math.floor(parseDateStr(todayStr()).getTime() / 86400000) % QUOTES.length;
-      dailyQuote = QUOTES[idx]; // shown in the Spotlight carousel
+      dailyQuote = QUOTES[idx];
+      document.getElementById('daily-quote').textContent = '“' + dailyQuote.t + '” — ' + dailyQuote.by;
     }
 
     // ---------- Birthday countdown ----------
@@ -2539,6 +2580,56 @@
         inner.innerHTML = avatarSVG(a);
         btn.appendChild(inner);
         btn.addEventListener('click', function () { selectAvatar(a.id); });
+        wrap.appendChild(btn);
+      });
+    }
+
+    // ---------- Color schemes ----------
+    var THEMES = [
+      { id: 'lavender', name: 'Lavender Dream', c1: '#9f62e2', c2: '#f472b6' },
+      { id: 'ocean',    name: 'Ocean Breeze',   c1: '#0ea5e9', c2: '#fb923c' },
+      { id: 'sunset',   name: 'Sunset Peach',   c1: '#f97316', c2: '#fb7185' },
+      { id: 'mint',     name: 'Mint Meadow',    c1: '#10b981', c2: '#a78bfa' },
+      { id: 'berry',    name: 'Berry Pop',      c1: '#d946ef', c2: '#2dd4bf' }
+    ];
+
+    function validTheme(id) {
+      for (var i = 0; i < THEMES.length; i++) if (THEMES[i].id === id) return id;
+      return 'lavender';
+    }
+
+    function applyTheme() {
+      state.theme = validTheme(state.theme);
+      document.documentElement.setAttribute('data-theme', state.theme);
+    }
+
+    function selectTheme(id) {
+      state.theme = validTheme(id);
+      applyTheme();
+      renderThemeOptions();
+      scheduleSave();
+    }
+
+    function renderThemeOptions() {
+      var wrap = document.getElementById('theme-options');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+      THEMES.forEach(function (t) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        var on = t.id === state.theme;
+        btn.className = 'flex flex-col items-center gap-1 p-1.5 rounded-2xl border-2 transition ' +
+          (on ? 'border-lavender-500 bg-lavender-50' : 'border-transparent hover:border-lavender-300');
+        var swatch = document.createElement('span');
+        swatch.className = 'w-10 h-10 rounded-full shadow-sm border-2 border-white';
+        swatch.style.background = 'linear-gradient(135deg, ' + t.c1 + ', ' + t.c2 + ')';
+        var label = document.createElement('span');
+        label.className = 'text-[9px] font-bold text-slate-600 leading-tight text-center';
+        label.textContent = t.name;
+        btn.appendChild(swatch);
+        btn.appendChild(label);
+        btn.setAttribute('aria-label', t.name);
+        btn.addEventListener('click', function () { selectTheme(t.id); });
         wrap.appendChild(btn);
       });
     }
@@ -3043,7 +3134,6 @@
     function spotlightStep(delta) { spotGo(spotIndex + delta, true); }
 
     function initSpotlight() {
-      renderSpotlight();
       spotTimer = setInterval(function () {
         if (Date.now() < spotPausedUntil || document.hidden) return;
         spotGo(spotIndex + 1, false);
@@ -3602,6 +3692,8 @@
       calWeekAnchor = new Date(now);
       selectedCalDay = todayStr();
 
+      applyTheme();
+      renderThemeOptions();
       renderRoutineEmojiOptions();
       renderAvatarOptions();
       renderAll();
@@ -3616,7 +3708,6 @@
 
       // Glass sheen, scroll reveal, parallax blobs, fireflies, lite mode
       initEffects();
-      initSpotlight();
 
       // A critter flutters across now and then
       setTimeout(launchFlyby, 4000);
