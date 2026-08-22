@@ -281,6 +281,7 @@
       .carousel > * { width: auto; }
       .carousel-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
       .carousel-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .carousel-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
     }
 
     /* Scrollbar Styling */
@@ -349,7 +350,7 @@
           </div>
           <p class="text-xs sm:text-sm text-lavender-700 font-medium mt-0.5">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20.7</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20.8</span>
           </p>
           <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1 max-w-md leading-snug"></p>
         </div>
@@ -502,6 +503,26 @@
               <i class="fa-solid fa-link mr-1 text-pink-400"></i> Link
             </button>
           </h3>
+          <!-- Combined feed mode: Google events flow into the dashboard calendar -->
+          <div id="gcal-feed-status" class="hidden">
+            <div class="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-100 rounded-2xl p-3">
+              <div class="text-xs font-medium text-emerald-800 min-w-0">
+                <p class="font-bold">✓ Combined with your calendar</p>
+                <p id="gcal-feed-info" class="text-[11px] text-emerald-700"></p>
+              </div>
+              <button onclick="fetchGoogleFeed(true)" class="text-xs font-bold bg-white text-emerald-700 border border-emerald-200 px-3 py-2 rounded-xl hover:bg-emerald-100 transition shrink-0">
+                <i class="fa-solid fa-rotate mr-1"></i> Sync
+              </button>
+            </div>
+            <div class="flex items-center justify-between mt-2">
+              <a href="https://calendar.google.com" target="_blank" class="text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl hover:bg-emerald-200 transition">
+                Open Google Calendar ↗
+              </a>
+              <button onclick="unlinkGoogleFeed()" class="text-xs font-bold text-slate-400 hover:text-red-400 px-3 py-2 transition">Stop combining</button>
+            </div>
+          </div>
+
+          <!-- Embed mode (until the feed is set up) -->
           <p id="gcal-empty" class="text-xs text-slate-500 font-medium">
             Link Antonella's Google Calendar (or a Google Classroom class calendar) and it will show up right here.
           </p>
@@ -515,6 +536,11 @@
               </a>
               <button onclick="unlinkGoogleCalendar()" class="text-xs font-bold text-slate-400 hover:text-red-400 px-3 py-2 transition">Unlink</button>
             </div>
+          </div>
+          <div id="gcal-combine-cta" class="mt-3">
+            <button onclick="openModal('gcal-feed-modal')" class="w-full text-xs font-bold text-lavender-700 bg-lavender-50 border-2 border-dashed border-lavender-200 px-3 py-3 rounded-xl hover:bg-lavender-100 transition">
+              ✨ Combine Google events into my calendar
+            </button>
           </div>
         </div>
 
@@ -568,6 +594,22 @@
               <p class="text-xs font-bold text-amber-700 uppercase tracking-wide mb-1.5">📝 Homework &amp; Tests</p>
               <div id="brief-homework" class="text-xs text-slate-600 font-medium space-y-1"></div>
             </div>
+          </div>
+        </div>
+
+        <!-- THIS WEEK SNAPSHOT (Sunday to Saturday) -->
+        <div class="cloud-card p-6">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h2 class="text-xl font-bold text-lavender-900 flex items-center gap-2">
+                <i class="fa-regular fa-calendar-check text-lavender-500"></i> This Week
+              </h2>
+              <p id="week-snapshot-range" class="text-xs text-lavender-600 font-medium"></p>
+            </div>
+            <span class="text-xs bg-lavender-100 text-lavender-600 px-2 py-0.5 rounded-full font-bold">Sun – Sat</span>
+          </div>
+          <div class="carousel carousel-7 gap-2" id="week-snapshot">
+            <!-- Dynamically populated -->
           </div>
         </div>
 
@@ -948,6 +990,31 @@
     </div>
   </div>
 
+  <!-- COMBINE GOOGLE FEED MODAL -->
+  <div id="gcal-feed-modal" class="modal">
+    <div class="cloud-card p-6 max-w-md w-full">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xl font-bold text-lavender-900">✨ Combine Google Calendar</h3>
+        <button onclick="closeModal('gcal-feed-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
+      </div>
+      <p class="text-xs text-slate-600 font-medium mb-3">
+        This pulls the family calendar's events right into the dashboard calendar — dots on the days,
+        the day card, Today's Brief, and This Week. It needs a one-time setup in Google (a parent does
+        this once on a computer; the steps are in the Setup Guide under "Combining Google Calendar").
+        At the end you get a web address that starts with <b>https://script.google.com/</b> — paste it here.
+      </p>
+      <form id="gcal-feed-form" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1" for="gcal-feed-input">Feed address</label>
+          <input type="url" id="gcal-feed-input" required placeholder="https://script.google.com/macros/s/.../exec" class="w-full p-3 rounded-xl border border-lavender-200 text-sm focus:outline-none focus:border-lavender-400">
+        </div>
+        <button type="submit" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow hover:opacity-90 transition">
+          Combine
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- ADD EVENT MODAL -->
   <div id="event-modal" class="modal">
     <div class="cloud-card p-6 max-w-md w-full">
@@ -1046,7 +1113,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.08.20.7';
+    var APP_VERSION = 'v2026.08.20.8';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
@@ -1070,6 +1137,7 @@
         homework: [], // { id, subject, title, due (YYYY-MM-DD), stars, type, done, doneDate }
         events: [],   // { id, title, date (YYYY-MM-DD), time }
         googleCal: { id: 'cartierafamily@gmail.com', mode: 'AGENDA' }, // the family calendar (Antonella & Carmine)
+        gcalFeed: null, // { url, lastSync, events: [{id, title, date, time, source:'google'}] } — combined mode
         activities: [
           { id: 'act-bjj',     name: 'Brazilian Jiu-Jitsu (BJJ)', emoji: '🥋', color: '#a855f7', days: [2, 4], time: '4:30 PM - 5:30 PM' },
           { id: 'act-theater', name: 'Theater Club',              emoji: '🎭', color: '#ec4899', days: [],     time: '' },
@@ -1513,8 +1581,21 @@
     // ---------- Calendar events ----------
     var EVENT_COLOR = '#8843ce';
 
+    var GOOGLE_EVENT_COLOR = '#0ea5e9';
+
+    function googleEventsOn(ds) {
+      var f = state.gcalFeed;
+      if (!f || !Array.isArray(f.events)) return [];
+      return f.events.filter(function (ev) { return ev.date === ds; });
+    }
+
+    // Dashboard events + Google events for a day (Google ones carry source:'google' and are read-only here)
     function eventsOn(ds) {
-      return state.events.filter(function (ev) { return ev.date === ds; });
+      return state.events.filter(function (ev) { return ev.date === ds; }).concat(googleEventsOn(ds));
+    }
+
+    function evIcon(ev) {
+      return ev.source === 'google' ? '📅 ' : '📌 ';
     }
 
     function openEventModal(prefill) {
@@ -1595,7 +1676,9 @@
       var hol = getHoliday(ds);
       if (hol) emojis.push(hol.emoji);
       (activityDaysOfWeek()[date.getDay()] || []).forEach(function (c) { dotColors.push(c); });
-      if (eventsOn(ds).length) dotColors.push(EVENT_COLOR);
+      var evs = eventsOn(ds);
+      if (evs.some(function (e) { return e.source !== 'google'; })) dotColors.push(EVENT_COLOR);
+      if (evs.some(function (e) { return e.source === 'google'; })) dotColors.push(GOOGLE_EVENT_COLOR);
       var hwDue = state.homework.some(function (hw) { return hw.due === ds && !hw.done; });
       if (hwDue) emojis.push('📝');
       return { emojis: emojis, dotColors: dotColors };
@@ -1707,7 +1790,7 @@
         state.activities.forEach(function (a) {
           if (a.days.indexOf(date.getDay()) !== -1) bits.push(a.emoji + ' ' + shortActivityLabel(a));
         });
-        eventsOn(ds).forEach(function (ev) { bits.push('📌 ' + ev.title); });
+        eventsOn(ds).forEach(function (ev) { bits.push(evIcon(ev) + ev.title); });
         var dueCount = state.homework.filter(function (hw) { return hw.due === ds && !hw.done; }).length;
         if (dueCount) bits.push('📝 ' + dueCount + ' due');
         info.textContent = bits.length ? bits.join(' · ') : 'Free day 🌈';
@@ -1767,12 +1850,15 @@
       });
 
       eventsOn(ds).forEach(function (ev) {
-        var del = document.createElement('button');
-        del.type = 'button';
-        del.className = 'w-8 h-8 rounded-lg text-slate-300 hover:text-red-400 hover:bg-red-50 transition shrink-0';
-        del.innerHTML = '<i class="fa-solid fa-trash-can text-xs"></i>';
-        del.addEventListener('click', function () { deleteEvent(ev.id); });
-        addRow('📌 ' + ev.title + (ev.time ? ' • ' + ev.time : ''), del);
+        var del = null;
+        if (ev.source !== 'google') { // Google events are managed in Google Calendar, not here
+          del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'w-8 h-8 rounded-lg text-slate-300 hover:text-red-400 hover:bg-red-50 transition shrink-0';
+          del.innerHTML = '<i class="fa-solid fa-trash-can text-xs"></i>';
+          del.addEventListener('click', function () { deleteEvent(ev.id); });
+        }
+        addRow(evIcon(ev) + ev.title + (ev.time ? ' • ' + ev.time : ''), del);
       });
 
       if (count === 0) addRow('Nothing scheduled — free day! 🌈');
@@ -1789,7 +1875,7 @@
         state.homework.forEach(function (hw) {
           if (hw.due === fds && !hw.done) upcoming.push(label + ': ' + (hw.type === 'test' ? '🧠 ' : '📝 ') + hw.title);
         });
-        eventsOn(fds).forEach(function (ev) { upcoming.push(label + ': 📌 ' + ev.title); });
+        eventsOn(fds).forEach(function (ev) { upcoming.push(label + ': ' + evIcon(ev) + ev.title); });
       }
       if (upcoming.length) {
         addHeading('Coming up this week');
@@ -1823,7 +1909,7 @@
       if (d.getMonth() === 11 && d.getDate() === 18) chip('🎂 HAPPY BIRTHDAY!!');
       var hol = getHoliday(ds);
       if (hol) chip(hol.emoji + ' ' + hol.name);
-      eventsOn(ds).forEach(function (ev) { chip('📌 ' + ev.title + (ev.time ? ' • ' + ev.time : '')); });
+      eventsOn(ds).forEach(function (ev) { chip(evIcon(ev) + ev.title + (ev.time ? ' • ' + ev.time : '')); });
 
       function fill(id, lines, emptyMsg) {
         var box = document.getElementById(id);
@@ -1879,6 +1965,7 @@
     function refreshDerived() {
       renderDayDetails();
       renderBrief();
+      renderWeekSnapshot();
     }
 
     // ---------- Quote of the day ----------
@@ -2139,6 +2226,16 @@
       evChip.appendChild(evDot);
       evChip.appendChild(document.createTextNode(' Events'));
       legend.appendChild(evChip);
+      if (state.gcalFeed && state.gcalFeed.url) {
+        var gChip = document.createElement('span');
+        gChip.className = 'flex items-center gap-1';
+        var gDot = document.createElement('span');
+        gDot.className = 'w-2 h-2 rounded-full inline-block';
+        gDot.style.backgroundColor = GOOGLE_EVENT_COLOR;
+        gChip.appendChild(gDot);
+        gChip.appendChild(document.createTextNode(' Google'));
+        legend.appendChild(gChip);
+      }
     }
 
     function openActivityModal(id) {
@@ -2425,10 +2522,34 @@
 
     function renderGoogleCal() {
       var cal = state.googleCal;
+      var feed = state.gcalFeed;
       var wrap = document.getElementById('gcal-embed-wrap');
       var empty = document.getElementById('gcal-empty');
       var btn = document.getElementById('gcal-link-btn');
       var frame = document.getElementById('gcal-iframe');
+      var feedBox = document.getElementById('gcal-feed-status');
+      var cta = document.getElementById('gcal-combine-cta');
+
+      if (feed && feed.url) {
+        // Combined mode: events live in the dashboard calendar; no embed needed
+        frame.removeAttribute('src');
+        wrap.classList.add('hidden');
+        empty.classList.add('hidden');
+        cta.classList.add('hidden');
+        btn.style.display = 'none';
+        feedBox.classList.remove('hidden');
+        var info = document.getElementById('gcal-feed-info');
+        var fmtOpts = { hour: 'numeric', minute: '2-digit' };
+        if (gcalFeedBusy) info.textContent = 'Syncing…';
+        else if (gcalFeedError) info.textContent = gcalFeedError + (feed.lastSync ? ' — showing events from ' + new Date(feed.lastSync).toLocaleTimeString([], fmtOpts) : '');
+        else if (feed.lastSync) info.textContent = (feed.events ? feed.events.length : 0) + ' events • updated ' + new Date(feed.lastSync).toLocaleTimeString([], fmtOpts);
+        else info.textContent = 'Not synced yet';
+        return;
+      }
+
+      feedBox.classList.add('hidden');
+      cta.classList.remove('hidden');
+      btn.style.display = '';
       if (cal && cal.id) {
         var url = googleCalEmbedUrl(cal);
         if (frame.getAttribute('src') !== url) frame.setAttribute('src', url);
@@ -2464,6 +2585,148 @@
       scheduleSave();
       showToast('Google Calendar linked! 📅');
     });
+
+    // ---------- Google Calendar feed (combined mode, via a tiny Apps Script a parent sets up once) ----------
+    var gcalFeedBusy = false;
+    var gcalFeedError = '';
+
+    function normalizeGoogleEvents(raw) {
+      var out = [];
+      (raw.events || []).forEach(function (ev, idx) {
+        var s = new Date(ev.start), e = new Date(ev.end);
+        if (isNaN(s.getTime())) return;
+        var title = String(ev.title || '(no title)').slice(0, 80);
+        if (ev.allDay) {
+          // All-day events: end is the midnight AFTER the last day, so walk day by day
+          var cur = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+          var endD = isNaN(e.getTime()) ? new Date(cur) : new Date(e.getFullYear(), e.getMonth(), e.getDate());
+          var n = 0;
+          do {
+            out.push({ id: 'g-' + idx + '-' + n, title: title, date: todayStr(cur), time: '', source: 'google' });
+            cur.setDate(cur.getDate() + 1); n++;
+          } while (cur < endD && n < 14);
+        } else {
+          out.push({
+            id: 'g-' + idx, title: title, date: todayStr(s),
+            time: s.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), source: 'google'
+          });
+        }
+      });
+      return out;
+    }
+
+    function fetchGoogleFeed(manual) {
+      var f = state.gcalFeed;
+      if (!f || !f.url) return;
+      gcalFeedBusy = true; gcalFeedError = '';
+      renderGoogleCal();
+      fetch(f.url, { redirect: 'follow' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data || !data.ok) throw new Error('bad feed');
+          f.events = normalizeGoogleEvents(data);
+          f.lastSync = new Date().toISOString();
+          gcalFeedBusy = false;
+          renderCalendar();
+          renderCalendarLegend();
+          renderGoogleCal();
+          scheduleSave();
+          if (manual) showToast('Synced ' + f.events.length + ' events from Google Calendar 📅');
+        })
+        .catch(function () {
+          gcalFeedBusy = false;
+          gcalFeedError = "Couldn't reach Google right now";
+          renderGoogleCal();
+          if (manual) showToast("Couldn't reach the Google feed — check the tablet is online and the feed address is right.");
+        });
+    }
+
+    function unlinkGoogleFeed() {
+      if (!confirm('Stop combining Google events into the dashboard calendar? (Nothing in Google is deleted.)')) return;
+      state.gcalFeed = null;
+      renderCalendar();
+      renderCalendarLegend();
+      renderGoogleCal();
+      scheduleSave();
+    }
+
+    document.getElementById('gcal-feed-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var url = document.getElementById('gcal-feed-input').value.trim();
+      if (url.indexOf('https://script.google.com/') !== 0) {
+        showToast('The feed address should start with https://script.google.com/ — copy it from the Deploy window.');
+        return;
+      }
+      state.gcalFeed = { url: url, lastSync: null, events: [] };
+      document.getElementById('gcal-feed-form').reset();
+      closeModal('gcal-feed-modal');
+      renderGoogleCal();
+      scheduleSave();
+      fetchGoogleFeed(true);
+    });
+
+    // ---------- This Week snapshot (Sunday to Saturday) ----------
+    function renderWeekSnapshot() {
+      var wrap = document.getElementById('week-snapshot');
+      wrap.innerHTML = '';
+      var todayDs = todayStr();
+      var today = parseDateStr(todayDs);
+      var start = new Date(today); start.setDate(today.getDate() - today.getDay());
+      var end = new Date(start); end.setDate(start.getDate() + 6);
+      var fmt = { month: 'short', day: 'numeric' };
+      document.getElementById('week-snapshot-range').textContent =
+        start.toLocaleDateString('en-US', fmt) + ' – ' + end.toLocaleDateString('en-US', fmt);
+
+      for (var i = 0; i < 7; i++) {
+        var d = new Date(start); d.setDate(start.getDate() + i);
+        var ds = todayStr(d);
+        var isToday = ds === todayDs;
+
+        var col = document.createElement('button');
+        col.type = 'button';
+        col.className = 'text-left rounded-2xl border-2 p-2.5 transition min-h-[96px] ' +
+          (isToday ? 'border-pink-300 bg-gradient-to-b from-pink-50 to-white' : 'border-lavender-100 bg-white hover:border-lavender-300');
+        (function (d2) { col.addEventListener('click', function () { selectCalDay(d2); }); })(ds);
+
+        var head = document.createElement('p');
+        head.className = 'text-[10px] font-bold uppercase tracking-wide ' + (isToday ? 'text-pink-500' : 'text-lavender-500');
+        head.textContent = DAY_LABELS[d.getDay()] + ' ' + d.getDate() + (isToday ? ' • today' : '');
+        col.appendChild(head);
+
+        var items = [];
+        if (d.getMonth() === 11 && d.getDate() === 18) items.push('🎂 Birthday!');
+        var hol = getHoliday(ds);
+        if (hol) items.push(hol.emoji + ' ' + hol.name);
+        state.activities.forEach(function (a) {
+          if (a.days.indexOf(d.getDay()) !== -1)
+            items.push(a.emoji + ' ' + shortActivityLabel(a) + (a.time ? ' ' + a.time.split(/\s*[-–—]\s*/)[0] : ''));
+        });
+        eventsOn(ds).forEach(function (ev) { items.push(evIcon(ev) + ev.title + (ev.time ? ' ' + ev.time : '')); });
+        state.homework.forEach(function (hw) {
+          if (hw.due === ds && !hw.done) items.push((hw.type === 'test' ? '🧠 ' : '📝 ') + hw.title);
+        });
+
+        if (!items.length) {
+          var free = document.createElement('p');
+          free.className = 'text-[10px] text-slate-300 font-semibold mt-1';
+          free.textContent = 'Free';
+          col.appendChild(free);
+        }
+        items.slice(0, 5).forEach(function (t) {
+          var p = document.createElement('p');
+          p.className = 'text-[10px] text-slate-600 font-semibold mt-1 leading-tight';
+          p.textContent = t;
+          col.appendChild(p);
+        });
+        if (items.length > 5) {
+          var more = document.createElement('p');
+          more.className = 'text-[10px] text-slate-400 mt-1';
+          more.textContent = '+' + (items.length - 5) + ' more';
+          col.appendChild(more);
+        }
+        wrap.appendChild(col);
+      }
+    }
 
     // ---------- Modals & toast ----------
     function openModal(id) {
@@ -2922,6 +3185,10 @@
       // Live weather: fetch now and refresh every 30 minutes
       fetchWeather();
       setInterval(fetchWeather, 30 * 60 * 1000);
+
+      // Google Calendar feed (combined mode): sync now and every 30 minutes
+      fetchGoogleFeed(false);
+      setInterval(function () { fetchGoogleFeed(false); }, 30 * 60 * 1000);
 
       // Staggered entrance for the cards (skip modal cards)
       var delay = 0;
