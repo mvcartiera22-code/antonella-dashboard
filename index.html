@@ -350,7 +350,7 @@
           </div>
           <p class="text-xs sm:text-sm text-lavender-700 font-medium mt-0.5">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20.8</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.08.20.9</span>
           </p>
           <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1 max-w-md leading-snug"></p>
         </div>
@@ -602,11 +602,21 @@
           <div class="flex items-center justify-between mb-3">
             <div>
               <h2 class="text-xl font-bold text-lavender-900 flex items-center gap-2">
-                <i class="fa-regular fa-calendar-check text-lavender-500"></i> This Week
+                <i class="fa-regular fa-calendar-check text-lavender-500"></i> <span id="week-snapshot-title">This Week</span>
               </h2>
               <p id="week-snapshot-range" class="text-xs text-lavender-600 font-medium"></p>
             </div>
-            <span class="text-xs bg-lavender-100 text-lavender-600 px-2 py-0.5 rounded-full font-bold">Sun – Sat</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="shiftWeekSnapshot(-1)" class="w-10 h-10 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Previous week">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <select id="week-snapshot-pick" onchange="pickWeekSnapshot(this.value)" class="h-10 px-3 rounded-xl border border-lavender-200 bg-white text-xs font-bold text-lavender-700 focus:outline-none focus:border-lavender-400">
+                <!-- Dynamically populated -->
+              </select>
+              <button onclick="shiftWeekSnapshot(1)" class="w-10 h-10 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Next week">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
           </div>
           <div class="carousel carousel-7 gap-2" id="week-snapshot">
             <!-- Dynamically populated -->
@@ -1113,7 +1123,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.08.20.8';
+    var APP_VERSION = 'v2026.08.20.9';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
@@ -2665,15 +2675,53 @@
       fetchGoogleFeed(true);
     });
 
-    // ---------- This Week snapshot (Sunday to Saturday) ----------
+    // ---------- This Week snapshot (Sunday to Saturday, with a week picker) ----------
+    var weekSnapshotOffset = 0; // 0 = this week, 1 = next week, -1 = last week...
+    var WEEK_PICK_MIN = -8, WEEK_PICK_MAX = 26;
+
+    function shiftWeekSnapshot(delta) {
+      weekSnapshotOffset = Math.max(WEEK_PICK_MIN, Math.min(WEEK_PICK_MAX, weekSnapshotOffset + delta));
+      renderWeekSnapshot();
+    }
+
+    function pickWeekSnapshot(value) {
+      weekSnapshotOffset = Number(value) || 0;
+      renderWeekSnapshot();
+    }
+
+    function weekLabelFor(offset) {
+      if (offset === 0) return 'This Week';
+      if (offset === 1) return 'Next Week';
+      if (offset === -1) return 'Last Week';
+      return null;
+    }
+
     function renderWeekSnapshot() {
       var wrap = document.getElementById('week-snapshot');
       wrap.innerHTML = '';
       var todayDs = todayStr();
       var today = parseDateStr(todayDs);
-      var start = new Date(today); start.setDate(today.getDate() - today.getDay());
-      var end = new Date(start); end.setDate(start.getDate() + 6);
+      var thisStart = new Date(today); thisStart.setDate(today.getDate() - today.getDay());
       var fmt = { month: 'short', day: 'numeric' };
+
+      // Week picker options
+      var pick = document.getElementById('week-snapshot-pick');
+      pick.innerHTML = '';
+      for (var o = WEEK_PICK_MIN; o <= WEEK_PICK_MAX; o++) {
+        var s = new Date(thisStart); s.setDate(thisStart.getDate() + o * 7);
+        var e = new Date(s); e.setDate(s.getDate() + 6);
+        var opt = document.createElement('option');
+        opt.value = o;
+        var tag = weekLabelFor(o);
+        opt.textContent = s.toLocaleDateString('en-US', fmt) + ' – ' + e.toLocaleDateString('en-US', fmt) + (tag ? '  (' + tag.toLowerCase() + ')' : '');
+        if (o === weekSnapshotOffset) opt.selected = true;
+        pick.appendChild(opt);
+      }
+
+      var start = new Date(thisStart); start.setDate(thisStart.getDate() + weekSnapshotOffset * 7);
+      var end = new Date(start); end.setDate(start.getDate() + 6);
+      document.getElementById('week-snapshot-title').textContent =
+        weekLabelFor(weekSnapshotOffset) || ('Week of ' + start.toLocaleDateString('en-US', fmt));
       document.getElementById('week-snapshot-range').textContent =
         start.toLocaleDateString('en-US', fmt) + ' – ' + end.toLocaleDateString('en-US', fmt);
 
@@ -3056,6 +3104,7 @@
         lastSeenDay = todayStr(now);
         selectedCalDay = todayStr(now);
         calWeekAnchor = new Date(now);
+        weekSnapshotOffset = 0;
         dailyReset();
         renderAll();
       }
