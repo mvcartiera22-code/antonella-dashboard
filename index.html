@@ -521,7 +521,7 @@
           </div>
           <p class="text-xs sm:text-sm text-lavender-700 font-medium mt-0.5">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.09.22</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.09.22.2</span>
           </p>
           <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1 max-w-md leading-snug"></p>
         </div>
@@ -739,6 +739,15 @@
           <div class="mt-3 pt-3 border-t border-lavender-100 flex items-center justify-between gap-2">
             <p class="text-[11px] text-slate-500 font-medium">Glass &amp; critters feeling slow? Switch them off.</p>
             <button onclick="toggleLite()" id="lite-btn" class="text-xs font-bold text-lavender-700 bg-white border border-lavender-200 px-3 py-2 rounded-xl hover:bg-lavender-50 transition shrink-0">✨ Effects: On</button>
+          </div>
+          <div class="mt-3 pt-3 border-t border-lavender-100">
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-lavender-900"><i class="fa-solid fa-arrows-rotate text-pink-400 mr-1"></i> Sync between screens</p>
+                <p id="sync-status" class="text-[11px] text-slate-500 font-medium">Off — this screen keeps its own copy</p>
+              </div>
+              <button onclick="openSyncModal()" id="sync-btn" class="text-xs font-bold text-lavender-700 bg-white border border-lavender-200 px-3 py-2 rounded-xl hover:bg-lavender-50 transition shrink-0">Set up</button>
+            </div>
           </div>
         </div>
 
@@ -1240,6 +1249,32 @@
     </div>
   </div>
 
+  <!-- SYNC SETUP MODAL -->
+  <div id="sync-modal" class="modal">
+    <div class="cloud-card p-6 max-w-md w-full">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xl font-bold text-lavender-900"><i class="fa-solid fa-arrows-rotate text-pink-400 mr-1"></i> Sync between screens</h3>
+        <button onclick="closeModal('sync-modal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold w-11 h-11">&times;</button>
+      </div>
+      <div id="sync-off-view">
+        <p class="text-xs text-slate-600 font-medium mb-3">
+          Keeps this dashboard the same on every screen (tablet, kitchen screen...). Paste the <b>family
+          script address</b> — the same one used to combine the Google Calendar (it starts with
+          <b>https://script.google.com/</b>). The family script must have the sync upgrade first — see the Setup Guide.
+        </p>
+        <form id="sync-form" class="space-y-3">
+          <input type="url" id="sync-url" required placeholder="https://script.google.com/macros/s/.../exec" class="w-full p-3 rounded-xl border border-lavender-200 text-sm focus:outline-none focus:border-lavender-400">
+          <button type="submit" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow hover:opacity-90 transition">Turn on sync</button>
+        </form>
+      </div>
+      <div id="sync-on-view" class="hidden space-y-3">
+        <p id="sync-on-info" class="text-xs text-slate-600 font-medium"></p>
+        <button onclick="syncNow(true)" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow hover:opacity-90 transition"><i class="fa-solid fa-rotate mr-1"></i> Sync now</button>
+        <button onclick="turnOffSync()" class="w-full text-slate-500 hover:text-red-500 font-bold text-sm py-2.5 rounded-xl border-2 border-lavender-100 transition">Turn off sync on this screen</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ADD EVENT MODAL -->
   <div id="event-modal" class="modal">
     <div class="cloud-card p-6 max-w-md w-full">
@@ -1360,7 +1395,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.09.22';
+    var APP_VERSION = 'v2026.09.22.2';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
@@ -1442,6 +1477,7 @@
       try {
         localStorage.setItem(STATE_KEY, JSON.stringify(state));
         setSaveBadge('saved');
+        scheduleSyncPush();
       } catch (err) {
         setSaveBadge('error');
       }
@@ -2888,8 +2924,11 @@
           }
           Object.keys(data).forEach(function (key) {
             if (key.indexOf('antonella_') !== 0) return; // never touch other dashboards' data
+            if (key === SYNC_KEY) return; // keep this screen's own sync connection
             try { localStorage.setItem(key, data[key]); } catch (e) {}
           });
+          // A restore should win on every synced screen, not get merged away
+          try { localStorage.setItem(SYNC_FORCE_KEY, '1'); } catch (e) {}
           location.reload();
         } catch (err) {
           alert("That file couldn't be read as a backup. Make sure you picked the right one!");
@@ -3409,6 +3448,283 @@
         f.style.animationDuration = (2.4 + Math.random() * 2) + 's, ' + (10 + Math.random() * 10) + 's';
         document.body.appendChild(f);
       }
+    }
+
+    // ---------- Sync between screens (via the family Google script) ----------
+    // Each screen keeps its own copy in localStorage and trades it with a copy kept in the
+    // family Google Drive. Saves are compare-and-set on a revision number; if two screens
+    // changed things at the same time, the changes are merged (3-way, against the last copy
+    // both agreed on), so nothing is lost: stars add up, new items from both sides are kept.
+    var SYNC_KEY = 'antonella_sync';            // { url, rev, base, lastOk }
+    var SYNC_FORCE_KEY = 'antonella_sync_force'; // set by Restore: this screen's copy wins
+    var SYNC_APP = 'antonella';
+    var sync = null;
+    var syncBusy = false, syncAgain = false, syncPushTimer = null, syncError = '';
+
+    function loadSyncInfo() {
+      try { sync = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null'); } catch (e) { sync = null; }
+      if (sync && !sync.url) sync = null;
+    }
+    function saveSyncInfo() {
+      try {
+        if (sync) localStorage.setItem(SYNC_KEY, JSON.stringify(sync));
+        else localStorage.removeItem(SYNC_KEY);
+      } catch (e) {}
+    }
+
+    // What gets shared. Effects on/off and the weather reading belong to each screen;
+    // Google Calendar events are re-fetched by each screen, so only the feed address travels.
+    function toSync(s) {
+      var out = JSON.parse(JSON.stringify(s));
+      delete out.lite;
+      delete out.weatherCache;
+      out.gcalFeed = s.gcalFeed && s.gcalFeed.url ? { url: s.gcalFeed.url } : null;
+      return out;
+    }
+
+    function sameJSON(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+    function merge3(b, l, r) {
+      if (sameJSON(l, r)) return l;
+      if (sameJSON(l, b)) return r;
+      if (sameJSON(r, b)) return l;
+      // Both screens changed this piece
+      if (typeof l === 'number' && typeof r === 'number' && typeof b === 'number') return b + (l - b) + (r - b); // e.g. stars earned on both
+      if (Array.isArray(l) && Array.isArray(r)) {
+        var bb = Array.isArray(b) ? b : [];
+        var hasIds = function (a) { return a.every(function (x) { return x && typeof x === 'object' && 'id' in x; }); };
+        if (hasIds(l) && hasIds(r) && hasIds(bb)) {
+          var find = function (a, id) { for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return undefined; };
+          var ids = r.map(function (x) { return x.id; });
+          l.forEach(function (x) { if (ids.indexOf(x.id) === -1) ids.push(x.id); });
+          var out = [];
+          ids.forEach(function (id) {
+            var bi = find(bb, id), li = find(l, id), ri = find(r, id);
+            if (li && ri) out.push(merge3(bi, li, ri));
+            else if (li) { if (!bi || !sameJSON(li, bi)) out.push(li); }   // new here, or changed here while deleted there
+            else if (ri) { if (!bi || !sameJSON(ri, bi)) out.push(ri); }
+          });
+          return out;
+        }
+        var prim = function (a) { return a.every(function (x) { return x === null || typeof x !== 'object'; }); };
+        if (prim(l) && prim(r) && prim(bb)) {
+          var res = r.filter(function (x) { return !(bb.indexOf(x) !== -1 && l.indexOf(x) === -1); }); // drop what this screen removed
+          l.forEach(function (x) { if (bb.indexOf(x) === -1 && res.indexOf(x) === -1) res.push(x); });  // add what this screen added
+          return res;
+        }
+        return l;
+      }
+      if (l && r && typeof l === 'object' && typeof r === 'object') {
+        var o = {};
+        Object.keys(r).concat(Object.keys(l)).forEach(function (k) {
+          if (k in o) return;
+          var v = merge3(b ? b[k] : undefined, l[k], r[k]);
+          if (v !== undefined) o[k] = v;
+        });
+        return o;
+      }
+      return l; // this screen wins a straight tie
+    }
+
+    // Put a shared copy into this screen's state, keeping this screen's own settings
+    function applySynced(shared) {
+      var keepLite = state.lite, keepWeather = state.weatherCache;
+      var oldFeed = state.gcalFeed;
+      var base = defaultState();
+      var next = Object.assign(base, shared);
+      next.lite = keepLite;
+      next.weatherCache = keepWeather;
+      var feedUrl = shared.gcalFeed && shared.gcalFeed.url;
+      if (feedUrl) {
+        next.gcalFeed = oldFeed && oldFeed.url === feedUrl ? oldFeed : { url: feedUrl, lastSync: null, events: [] };
+      } else {
+        next.gcalFeed = null;
+      }
+      var feedChanged = !!feedUrl && !(oldFeed && oldFeed.url === feedUrl);
+      state = next;
+      dailyReset();
+      try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (e) {}
+      applyTheme();
+      renderThemeOptions();
+      renderAvatarOptions();
+      renderAll();
+      if (feedChanged) fetchGoogleFeed(false);
+    }
+
+    function syncFetch(url, opts) {
+      return fetch(url, Object.assign({ redirect: 'follow' }, opts || {})).then(function (r) { return r.json(); });
+    }
+
+    function syncGetRemote(since) {
+      var u = sync.url + (sync.url.indexOf('?') === -1 ? '?' : '&') + 'action=get&app=' + SYNC_APP + '&since=' + since;
+      return syncFetch(u);
+    }
+
+    function syncPutRemote(baseRev, shared) {
+      return syncFetch(sync.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // plain text keeps the browser from blocking it
+        body: JSON.stringify({ action: 'put', app: SYNC_APP, baseRev: baseRev, state: shared })
+      });
+    }
+
+    function scheduleSyncPush() {
+      if (!sync) return;
+      if (syncPushTimer) clearTimeout(syncPushTimer);
+      syncPushTimer = setTimeout(function () { syncNow(false); }, 1500);
+    }
+
+    // One sync round: pull anything new, merge if both sides changed, push this screen's changes.
+    function syncNow(manual, attempt) {
+      if (!sync) return Promise.resolve();
+      if (syncBusy) { syncAgain = true; return Promise.resolve(); }
+      syncBusy = true;
+      attempt = attempt || 0;
+      var force = false;
+      try { force = localStorage.getItem(SYNC_FORCE_KEY) === '1'; } catch (e) {}
+
+      return syncGetRemote(force ? -1 : (sync.rev === undefined ? -1 : sync.rev)).then(function (g) {
+        if (!g || !g.ok) throw new Error((g && g.error) || 'no answer');
+        var local = toSync(state);
+        var base = sync.base ? JSON.parse(sync.base) : null;
+
+        if (force) {
+          // Restored from a backup: this screen's copy replaces the shared one
+          return pushLoop(g.rev, local, true);
+        }
+        if (g.unchanged) {
+          if (base && sameJSON(local, base)) return null;   // nothing new anywhere
+          return pushLoop(g.rev, local, false);             // only this screen changed
+        }
+        var remote = g.state && Object.keys(g.state).length ? g.state : null;
+        if (!remote) return pushLoop(g.rev, local, false);   // first screen to share: send ours
+
+        if (!base) {
+          // First time this screen joins: take the shared copy (the tablet shared first) —
+          // unless this screen has its own data and the grown-up says to keep it
+          var hasOwn = local.stars > 0 || (local.homework || []).length > 0 || (local.events || []).length > 0;
+          if (hasOwn && !sameJSON(local, remote) &&
+              !confirm("Another screen is already sharing this dashboard.\n\n" +
+                       "OK = show the shared dashboard here (this screen's own copy is replaced).\n" +
+                       "Cancel = send THIS screen's dashboard to the others instead.")) {
+            return pushLoop(g.rev, local, true);
+          }
+          applySynced(remote);
+          sync.rev = g.rev; sync.base = JSON.stringify(remote); sync.lastOk = new Date().toISOString();
+          saveSyncInfo();
+          if (manual) showToast('Synced! This screen now matches the others. 🔄');
+          return null;
+        }
+        if (sameJSON(local, base)) {
+          applySynced(remote);                               // only the other screen changed
+          sync.rev = g.rev; sync.base = JSON.stringify(remote); sync.lastOk = new Date().toISOString();
+          saveSyncInfo();
+          return null;
+        }
+        // Both changed: merge, show it here, then send the merged copy
+        var merged = merge3(base, local, remote);
+        applySynced(merged);
+        sync.rev = g.rev; sync.base = JSON.stringify(remote);
+        saveSyncInfo();
+        return pushLoop(g.rev, toSync(state), false);
+      }).then(function () {
+        syncError = '';
+        if (manual) showToast('Everything is in sync! 🔄');
+      }).catch(function () {
+        syncError = "Couldn't reach the family script — will keep trying";
+        if (manual) showToast("Couldn't reach the family script. Check the internet and the address, then try again.");
+      }).then(function () {
+        syncBusy = false;
+        renderSyncStatus();
+        if (syncAgain) { syncAgain = false; syncNow(false); }
+      });
+
+      function pushLoop(rev, shared, isForce) {
+        return syncPutRemote(rev, shared).then(function (p) {
+          if (p && p.ok) {
+            sync.rev = p.rev; sync.base = JSON.stringify(shared); sync.lastOk = new Date().toISOString();
+            saveSyncInfo();
+            if (isForce) { try { localStorage.removeItem(SYNC_FORCE_KEY); } catch (e) {} }
+            return null;
+          }
+          if (p && p.conflict && attempt < 3) {
+            attempt++;
+            if (isForce) return pushLoop(p.rev, shared, true);
+            var base = sync.base ? JSON.parse(sync.base) : {};
+            var merged = merge3(base, toSync(state), p.state || {});
+            applySynced(merged);
+            sync.rev = p.rev; sync.base = JSON.stringify(p.state || {});
+            saveSyncInfo();
+            return pushLoop(p.rev, toSync(state), false);
+          }
+          throw new Error('save refused');
+        });
+      }
+    }
+
+    function renderSyncStatus() {
+      var el = document.getElementById('sync-status');
+      var btn = document.getElementById('sync-btn');
+      if (!el) return;
+      if (!sync) {
+        el.textContent = 'Off — this screen keeps its own copy';
+        btn.textContent = 'Set up';
+        return;
+      }
+      btn.textContent = 'Options';
+      if (syncError) { el.textContent = '⚠️ ' + syncError; return; }
+      el.textContent = sync.lastOk
+        ? 'On ✓ last synced ' + new Date(sync.lastOk).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+        : 'On — connecting…';
+    }
+
+    function openSyncModal() {
+      var on = !!sync;
+      document.getElementById('sync-off-view').classList.toggle('hidden', on);
+      document.getElementById('sync-on-view').classList.toggle('hidden', !on);
+      if (on) {
+        document.getElementById('sync-on-info').textContent =
+          'This screen shares its dashboard with your other screens' +
+          (sync.lastOk ? ' (last synced ' + new Date(sync.lastOk).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) + ')' : '') +
+          '. Changes show up on the others within about a minute.';
+      } else {
+        // Same family script as the Google Calendar feed: fill it in if we have it
+        document.getElementById('sync-url').value = (state.gcalFeed && state.gcalFeed.url) || '';
+      }
+      openModal('sync-modal');
+    }
+
+    document.getElementById('sync-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var url = document.getElementById('sync-url').value.trim();
+      if (url.indexOf('https://script.google.com/') !== 0) {
+        showToast('The address should start with https://script.google.com/ — the same one used for the Google Calendar.');
+        return;
+      }
+      sync = { url: url };
+      saveSyncInfo();
+      closeModal('sync-modal');
+      renderSyncStatus();
+      syncNow(true);
+    });
+
+    function turnOffSync() {
+      if (!confirm('Turn off sync on this screen? It keeps everything it has now, but stops sharing changes.')) return;
+      sync = null;
+      saveSyncInfo();
+      syncError = '';
+      closeModal('sync-modal');
+      renderSyncStatus();
+    }
+
+    function initSync() {
+      loadSyncInfo();
+      renderSyncStatus();
+      if (sync) syncNow(false);
+      // These do nothing while sync is off, and start working the moment it is turned on
+      setInterval(function () { if (!document.hidden) syncNow(false); }, 60 * 1000);
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) syncNow(false); });
+      window.addEventListener('focus', function () { syncNow(false); });
     }
 
     // ---------- Modals & toast ----------
@@ -4144,6 +4460,9 @@
       // Live weather: fetch now and refresh every 30 minutes
       fetchWeather();
       setInterval(fetchWeather, 30 * 60 * 1000);
+
+      // Sync between screens: pull now, then about once a minute and whenever the screen wakes up
+      initSync();
 
       // Google Calendar feed (combined mode): sync now and every 30 minutes
       fetchGoogleFeed(false);
