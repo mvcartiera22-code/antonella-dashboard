@@ -521,7 +521,7 @@
           </div>
           <p class="text-xs sm:text-sm text-lavender-700 font-medium mt-0.5">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.09.27</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.09.27.2</span>
           </p>
           <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1 max-w-md leading-snug"></p>
         </div>
@@ -1416,7 +1416,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.09.27';
+    var APP_VERSION = 'v2026.09.27.2';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
@@ -3945,8 +3945,28 @@
       var today = parseDateStr(todayStr());
       if (lower.indexOf('today') === 0) return todayStr(today);
       if (lower.indexOf('tomorrow') === 0) { var t = new Date(today); t.setDate(t.getDate() + 1); return todayStr(t); }
+      if (lower.indexOf('yesterday') === 0) { var y = new Date(today); y.setDate(y.getDate() - 1); return todayStr(y); }
       var m = lower.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})/);
-      if (!m) return '';
+      if (!m) {
+        // "9/29" or "9/29/26"
+        var n = lower.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
+        if (n) {
+          var yr = n[3] ? Number(n[3]) : today.getFullYear();
+          if (yr < 100) yr += 2000;
+          var nd = new Date(yr, Number(n[1]) - 1, Number(n[2]));
+          if (!n[3] && (today - nd) / 86400000 > 180) nd.setFullYear(nd.getFullYear() + 1);
+          return todayStr(nd);
+        }
+        // "Due Tuesday": Classroom only uses a bare weekday for the coming week
+        var w = lower.match(/^(sun|mon|tue|wed|thu|fri|sat)/);
+        if (w) {
+          var target = ['sun','mon','tue','wed','thu','fri','sat'].indexOf(w[1]);
+          var wd = new Date(today);
+          wd.setDate(wd.getDate() + ((target - today.getDay() + 7) % 7 || 7));
+          return todayStr(wd);
+        }
+        return '';
+      }
       var d = new Date(today.getFullYear(), MONTH_PREFIXES.indexOf(m[1]), Number(m[2]));
       if ((today - d) / 86400000 > 180) d.setFullYear(d.getFullYear() + 1); // e.g. a January date seen in December
       return todayStr(d);
@@ -4068,10 +4088,14 @@
     // Copying the "Due soon" list gives lines like:  Cave Art! / Class / Social Studies 6 ... / Today, 11:59 PM
     // Copying the To-do page gives:                   Cave Art! / Social Studies 6 / Due Today, 11:59 PM
     // Tables or copied rows may come tab-separated on one line; all three are handled.
-    var PASTE_SKIP_RE = /^(class|due soon|view to-?do|to-?do|assigned|missing|done|turned in|home|calendar|enrolled|classes|this week|next week|later|earlier|no due date|see all|view all|view assignment|your work|add or create|mark as done|class comments?|private comments?|instructions)$/i;
+    var PASTE_SKIP_RE = /^(class|all classes|all|sort by|filter|due soon|view to-?do|to-?do|assigned|missing|done|turned in|home|calendar|enrolled|classes|this week|next week|later|earlier|no due date|see all|view all|view assignment|your work|add or create|mark as done|class comments?|private comments?|instructions)$/i;
+
+    // Extra date styles seen on the To-do page: "Due Tuesday", "Due yesterday", "9/29", each maybe with a time
+    var PASTE_DUE_EXTRA_RE = /^(?:due\s+)?(?:yesterday|(?:sun|mon|tues?|wed(?:nes)?|thu(?:rs)?|fri|sat(?:ur)?)(?:day)?\.?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)(?:,?\s+\d{1,2}(?::\d{2})?\s*(?:am|pm))?$/i;
 
     function isDueLine(line) {
-      return (DUE_RE.test(line) && line.length <= 45) || /^(due\s+)?no due date$/i.test(line);
+      return (DUE_RE.test(line) && line.length <= 45) || PASTE_DUE_EXTRA_RE.test(line) ||
+        /^(due\s+)?no due date$/i.test(line);
     }
 
     function cleanPastedTitle(t) {
@@ -4084,35 +4108,53 @@
         .filter(function (s) { return s && !TIME_ONLY_RE.test(s) && !/^\d+\s*points?$/i.test(s) && !/^(posted|edited)\b/i.test(s); });
       var items = [];
       var group = [];
-      lines.forEach(function (line) {
-        if (!isDueLine(line)) { group.push(line); return; }
-        var rawGroup = group;
-        group = [];
-        var classIdx = -1;
-        rawGroup.forEach(function (l, i) { if (/^class$/i.test(l)) classIdx = i; });
-        var title = '', cls = '';
-        if (classIdx > 0) {
-          // Due soon list: "Title / Class / Class name"
-          title = rawGroup[classIdx - 1];
-          cls = rawGroup[classIdx + 1] || '';
-        } else {
-          var g = rawGroup.filter(function (l) { return !PASTE_SKIP_RE.test(l); });
-          if (!g.length) return;
-          if (g.length >= 2) { title = g[g.length - 2]; cls = g[g.length - 1]; }
-          else title = g[0];
-          // If the "class" line doesn't look like a class but the title does, they were the other way round
-          if (cls && !classToSubject(cls) && classToSubject(title) && g.length === 2) { var t = title; title = cls; cls = t; }
-        }
-        title = cleanPastedTitle(title);
+
+      function addItem(title, cls, dueLine) {
+        title = cleanPastedTitle(title || '');
         if (title.length < 2 || PASTE_SKIP_RE.test(title)) return;
         items.push({
           title: title,
           subject: classToSubject(cls) || classToSubject(title) || 'Homeroom (Mrs. Bolard)',
-          classText: cls,
-          due: /no due date/i.test(line) ? '' : classroomDueToDate(line),
+          classText: cls || '',
+          due: !dueLine || /no due date/i.test(dueLine) ? '' : classroomDueToDate(dueLine),
           type: /\b(test|quiz|exam)\b/i.test(title) ? 'test' : 'homework'
         });
+      }
+
+      // Everything between two due-date lines. Usually one assignment, but assignments with
+      // no due date can sit in there too, so find every title+class pair, not just the last.
+      function flushGroup(rawGroup, dueLine) {
+        var pairs = [];
+        var hasClassLabels = rawGroup.some(function (l) { return /^class$/i.test(l); });
+        if (hasClassLabels) {
+          // Due soon list: "Title / Class / Class name"
+          rawGroup.forEach(function (l, i) {
+            if (/^class$/i.test(l) && i > 0) pairs.push([rawGroup[i - 1], rawGroup[i + 1] || '']);
+          });
+        } else {
+          var g = rawGroup.filter(function (l) { return !PASTE_SKIP_RE.test(l); });
+          var i = 0;
+          while (i < g.length) {
+            if (i + 1 < g.length && classToSubject(g[i + 1])) { pairs.push([g[i], g[i + 1]]); i += 2; }
+            else i++;
+          }
+          if (!pairs.length && g.length && dueLine) {
+            // Unknown class names: fall back to "title, class" as the last two lines
+            if (g.length >= 2) pairs.push([g[g.length - 2], g[g.length - 1]]);
+            else pairs.push([g[0], '']);
+          }
+        }
+        pairs.forEach(function (p, idx) {
+          addItem(p[0], p[1], idx === pairs.length - 1 ? dueLine : null); // the date belongs to the last one
+        });
+      }
+
+      lines.forEach(function (line) {
+        if (!isDueLine(line)) { group.push(line); return; }
+        flushGroup(group, line);
+        group = [];
       });
+      if (group.length) flushGroup(group, null); // trailing assignments with no due date
       return items;
     }
 
