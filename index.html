@@ -521,7 +521,7 @@
           </div>
           <p class="text-xs sm:text-sm text-lavender-700 font-medium mt-0.5">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.09.22.2</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.09.27</span>
           </p>
           <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1 max-w-md leading-snug"></p>
         </div>
@@ -827,6 +827,9 @@
               </a>
               <button onclick="openSnapModal()" class="bg-white text-lavender-700 font-bold text-xs px-4 py-3 rounded-xl border-2 border-lavender-200 hover:bg-lavender-50 transition flex items-center gap-1.5">
                 <i class="fa-solid fa-camera text-pink-400"></i> Snap &amp; Add
+              </button>
+              <button onclick="openPasteText()" class="bg-white text-lavender-700 font-bold text-xs px-4 py-3 rounded-xl border-2 border-lavender-200 hover:bg-lavender-50 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-paste text-pink-400"></i> Paste
               </button>
               <button onclick="openModal('homework-modal')" class="bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-md hover:opacity-90 transition flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> Add Homework / Test
@@ -1342,7 +1345,25 @@
             <i class="fa-regular fa-image mr-1 text-pink-400"></i> Choose a Screenshot or Picture
             <input type="file" id="snap-input-gallery" accept="image/*" class="hidden snap-file">
           </label>
+          <button type="button" onclick="snapShowStep('snap-step-paste')" class="w-full text-lavender-700 font-bold text-sm px-4 py-3 rounded-xl border-2 border-dashed border-lavender-200 hover:bg-lavender-50 transition">
+            <i class="fa-solid fa-paste text-pink-400 mr-1"></i> Paste text from Classroom instead
+          </button>
         </div>
+      </div>
+
+      <!-- Step 1b: paste text (copied from Google Classroom) -->
+      <div id="snap-step-paste" class="hidden">
+        <p class="text-xs text-slate-500 font-medium mb-2">
+          In Google Classroom, select the assignments (the <b>Due soon</b> list, the <b>To-do</b> page, or one
+          assignment) and tap <b>Copy</b>. Then paste here.
+        </p>
+        <button type="button" onclick="pasteFromClipboard()" class="w-full mb-2 bg-white text-lavender-700 font-bold text-sm px-4 py-3 rounded-xl border-2 border-lavender-200 hover:bg-lavender-50 transition">
+          <i class="fa-solid fa-paste text-pink-400 mr-1"></i> Paste what I copied
+        </button>
+        <textarea id="paste-text" rows="7" placeholder="…or press and hold here, then tap Paste" class="w-full p-3 rounded-xl border border-lavender-200 text-xs text-slate-600 focus:outline-none focus:border-lavender-400 mb-2"></textarea>
+        <button type="button" onclick="readPastedText()" class="w-full bg-gradient-to-r from-lavender-500 to-pink-500 text-white font-bold text-sm px-4 py-3 rounded-xl shadow hover:opacity-90 transition">
+          Read it ✨
+        </button>
       </div>
 
       <!-- Step 2: reading -->
@@ -1395,7 +1416,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.09.22.2';
+    var APP_VERSION = 'v2026.09.27';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
@@ -3822,13 +3843,15 @@
       document.getElementById('snap-input-gallery').value = '';
       document.getElementById('snap-classroom-btn').classList.add('hidden');
       document.getElementById('snap-step-pick').classList.remove('hidden');
+      document.getElementById('snap-step-paste').classList.add('hidden');
+      document.getElementById('paste-text').value = '';
       document.getElementById('snap-step-reading').classList.add('hidden');
       document.getElementById('snap-step-result').classList.add('hidden');
       document.getElementById('snap-progress-bar').style.width = '0%';
     }
 
     function snapShowStep(step) {
-      ['snap-step-pick', 'snap-step-reading', 'snap-step-result'].forEach(function (id) {
+      ['snap-step-pick', 'snap-step-paste', 'snap-step-reading', 'snap-step-result'].forEach(function (id) {
         document.getElementById(id).classList.toggle('hidden', id !== step);
       });
     }
@@ -4039,6 +4062,95 @@
         });
       });
       return items;
+    }
+
+    // ---------- Paste text copied from Google Classroom ----------
+    // Copying the "Due soon" list gives lines like:  Cave Art! / Class / Social Studies 6 ... / Today, 11:59 PM
+    // Copying the To-do page gives:                   Cave Art! / Social Studies 6 / Due Today, 11:59 PM
+    // Tables or copied rows may come tab-separated on one line; all three are handled.
+    var PASTE_SKIP_RE = /^(class|due soon|view to-?do|to-?do|assigned|missing|done|turned in|home|calendar|enrolled|classes|this week|next week|later|earlier|no due date|see all|view all|view assignment|your work|add or create|mark as done|class comments?|private comments?|instructions)$/i;
+
+    function isDueLine(line) {
+      return (DUE_RE.test(line) && line.length <= 45) || /^(due\s+)?no due date$/i.test(line);
+    }
+
+    function cleanPastedTitle(t) {
+      return t.replace(/\s*(\.{2,}|…)\s*$/, '').replace(/^(assignment|question|quiz assignment|material):\s*/i, '').trim().slice(0, 80);
+    }
+
+    function parseClassroomText(text) {
+      var lines = String(text || '').replace(/\r/g, '').split(/\n|\t/)
+        .map(function (s) { return s.replace(/\s+/g, ' ').trim(); })
+        .filter(function (s) { return s && !TIME_ONLY_RE.test(s) && !/^\d+\s*points?$/i.test(s) && !/^(posted|edited)\b/i.test(s); });
+      var items = [];
+      var group = [];
+      lines.forEach(function (line) {
+        if (!isDueLine(line)) { group.push(line); return; }
+        var rawGroup = group;
+        group = [];
+        var classIdx = -1;
+        rawGroup.forEach(function (l, i) { if (/^class$/i.test(l)) classIdx = i; });
+        var title = '', cls = '';
+        if (classIdx > 0) {
+          // Due soon list: "Title / Class / Class name"
+          title = rawGroup[classIdx - 1];
+          cls = rawGroup[classIdx + 1] || '';
+        } else {
+          var g = rawGroup.filter(function (l) { return !PASTE_SKIP_RE.test(l); });
+          if (!g.length) return;
+          if (g.length >= 2) { title = g[g.length - 2]; cls = g[g.length - 1]; }
+          else title = g[0];
+          // If the "class" line doesn't look like a class but the title does, they were the other way round
+          if (cls && !classToSubject(cls) && classToSubject(title) && g.length === 2) { var t = title; title = cls; cls = t; }
+        }
+        title = cleanPastedTitle(title);
+        if (title.length < 2 || PASTE_SKIP_RE.test(title)) return;
+        items.push({
+          title: title,
+          subject: classToSubject(cls) || classToSubject(title) || 'Homeroom (Mrs. Bolard)',
+          classText: cls,
+          due: /no due date/i.test(line) ? '' : classroomDueToDate(line),
+          type: /\b(test|quiz|exam)\b/i.test(title) ? 'test' : 'homework'
+        });
+      });
+      return items;
+    }
+
+    function openPasteText() {
+      resetSnapModal();
+      snapShowStep('snap-step-paste');
+      openModal('snap-modal');
+    }
+
+    function pasteFromClipboard() {
+      var box = document.getElementById('paste-text');
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        navigator.clipboard.readText().then(function (t) {
+          if (!t) { showToast('Nothing copied yet — copy the assignments in Classroom first.'); return; }
+          box.value = t;
+          readPastedText();
+        }).catch(function () {
+          box.focus();
+          showToast('Press and hold in the box, then tap Paste.');
+        });
+      } else {
+        box.focus();
+        showToast('Press and hold in the box, then tap Paste.');
+      }
+    }
+
+    function readPastedText() {
+      var text = document.getElementById('paste-text').value.trim();
+      if (!text) { showToast('Paste the copied assignments into the box first.'); return; }
+      classroomItems = parseClassroomText(text);
+      if (classroomItems.length >= 1) {
+        openClassroomImport(); // tidy review list (works for one or many)
+        return;
+      }
+      // No due dates found (e.g. just a title): fill in the homework form instead
+      document.getElementById('snap-text').value = text;
+      snapParsed = parseSnapText(text);
+      snapUseHomework();
     }
 
     function normTitle(t) { return String(t || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
