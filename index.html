@@ -521,7 +521,7 @@
           </div>
           <p class="text-xs sm:text-sm text-lavender-700 font-medium mt-0.5">
             <i class="fa-solid fa-location-dot text-pink-400 mr-1"></i> Saint Paul's School • Kensington, CT
-            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.09.27.2</span>
+            <span class="text-[10px] text-lavender-400 font-bold ml-2" id="version-label">v2026.09.27.3</span>
           </p>
           <p id="daily-quote" class="text-xs text-lavender-500 italic font-medium mt-1 max-w-md leading-snug"></p>
         </div>
@@ -587,10 +587,12 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
       <!-- LEFT COLUMN (4/12): Time/Mood, Calendar & Activities -->
-      <div class="lg:col-span-4 flex flex-col gap-6">
+      <!-- On narrow (stacked) screens both columns dissolve into one list so cards can be reordered:
+           Calendar, then This Week, then everything else in page order. Wide screens keep two columns. -->
+      <div class="lg:col-span-4 contents lg:flex lg:flex-col gap-6">
 
         <!-- CALENDAR -->
-        <div class="cloud-card p-5">
+        <div class="cloud-card p-5 order-[-2] lg:order-none">
           <div class="flex items-center justify-between mb-2">
             <button onclick="navCalendar(-1)" class="w-11 h-11 rounded-xl bg-lavender-50 border border-lavender-200 text-lavender-600 font-bold hover:bg-lavender-100 transition" aria-label="Back">
               <i class="fa-solid fa-chevron-left"></i>
@@ -754,7 +756,7 @@
       </div>
 
       <!-- CENTER & RIGHT COLUMN (8/12): Responsibilities, School, Homework & Badges -->
-      <div class="lg:col-span-8 flex flex-col gap-6">
+      <div class="lg:col-span-8 contents lg:flex lg:flex-col gap-6">
 
         <!-- TODAY'S BRIEF -->
         <div class="cloud-card p-6">
@@ -787,7 +789,7 @@
         </div>
 
         <!-- THIS WEEK SNAPSHOT (Sunday to Saturday) -->
-        <div class="cloud-card p-6">
+        <div class="cloud-card p-6 order-[-1] lg:order-none">
           <div class="flex items-center justify-between mb-3">
             <div>
               <h2 class="text-xl font-bold text-lavender-900 flex items-center gap-2">
@@ -1416,7 +1418,7 @@
   <script>
     'use strict';
 
-    var APP_VERSION = 'v2026.09.27.2';
+    var APP_VERSION = 'v2026.09.27.3';
     var STATE_KEY = 'antonella_dashboard_v1';
     var BACKUP_DATE_KEY = 'antonella_last_backup';
     var BACKUP_SNOOZE_KEY = 'antonella_backup_snooze';
